@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env*
+.DS_Store
+
+# Alembic
+alembic/versions/__pycache__/
+
+# General
+*.log
+*.sqlite3
+.idea/
+.vscode/
+
+# Node/Frontend
+node_modules/
+.next/
+dist/
+out/ 
