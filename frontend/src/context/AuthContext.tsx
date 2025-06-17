@@ -74,11 +74,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const refetchUser = async () => {
-    await fetchUser();
+    await login();
   };
 
   useEffect(() => {
-    fetchUser();
+    login();
   }, []);
 
   const value: AuthContextType = {
