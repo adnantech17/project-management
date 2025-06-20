@@ -1,6 +1,6 @@
-import React, { useState, FC } from "react";
+import { useState, FC, ChangeEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import Input from "./Input";
+import Input from "@/components/form/Input";
 
 interface PasswordInputProps {
   label?: string;
@@ -8,7 +8,7 @@ interface PasswordInputProps {
   className?: string;
   placeholder?: string;
   value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
   name?: string;
   id?: string;
   required?: boolean;

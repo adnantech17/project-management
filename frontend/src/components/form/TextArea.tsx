@@ -4,6 +4,7 @@ interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
   id?: string;
+  readonly?: boolean;
 }
 
 const TextArea: FC<TextAreaProps> = ({
@@ -11,6 +12,7 @@ const TextArea: FC<TextAreaProps> = ({
   error,
   className = "",
   id,
+  readonly = false,
   ...props
 }) => {
   const textAreaId = id || label?.toLowerCase().replace(/\s+/g, "-");
@@ -20,7 +22,10 @@ const TextArea: FC<TextAreaProps> = ({
   const errorClasses = error
     ? "border-red-300 focus:ring-red-500 focus:border-red-500"
     : "border-gray-300";
-  const textAreaClasses = `${baseClasses} ${errorClasses} ${className}`;
+  const readonlyClasses = readonly
+    ? "bg-gray-50 text-gray-700 cursor-not-allowed"
+    : "";
+  const textAreaClasses = `${baseClasses} ${errorClasses} ${readonlyClasses} ${className}`;
 
   return (
     <div className="space-y-1">
@@ -32,7 +37,13 @@ const TextArea: FC<TextAreaProps> = ({
           {label}
         </label>
       )}
-      <textarea id={textAreaId} className={textAreaClasses} {...props} />
+      <textarea
+        id={textAreaId}
+        className={textAreaClasses}
+        readOnly={readonly}
+        tabIndex={readonly ? -1 : undefined}
+        {...props}
+      />
       {error && <p className="text-red-500 text-sm">{error}</p>}
     </div>
   );

@@ -4,6 +4,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   className?: string;
+  readonly?: boolean;
 }
 
 const Input: FC<InputProps> = ({
@@ -11,6 +12,7 @@ const Input: FC<InputProps> = ({
   error,
   className = "",
   id,
+  readonly = false,
   ...props
 }) => {
   const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
@@ -20,7 +22,10 @@ const Input: FC<InputProps> = ({
   const errorClasses = error
     ? "border-red-300 focus:ring-red-500 focus:border-red-500"
     : "border-gray-300";
-  const inputClasses = `${baseClasses} ${errorClasses} ${className}`;
+  const readonlyClasses = readonly
+    ? "bg-gray-50 text-gray-700 cursor-not-allowed"
+    : "";
+  const inputClasses = `${baseClasses} ${errorClasses} ${readonlyClasses} ${className}`;
 
   return (
     <div className="space-y-1">
@@ -32,7 +37,13 @@ const Input: FC<InputProps> = ({
           {label}
         </label>
       )}
-      <input id={inputId} className={inputClasses} {...props} />
+      <input
+        id={inputId}
+        className={inputClasses}
+        readOnly={readonly}
+        tabIndex={readonly ? -1 : undefined}
+        {...props}
+      />
       {error && <p className="text-red-500 text-sm">{error}</p>}
     </div>
   );

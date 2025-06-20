@@ -3,8 +3,7 @@ from typing import Optional, TYPE_CHECKING
 import uuid
 from datetime import datetime
 
-if TYPE_CHECKING:
-    from .category import CategoryOut
+from .category import CategoryOut
 
 class TicketBase(BaseModel):
     title: str
@@ -33,4 +32,4 @@ class TicketOut(TicketBase):
         from_attributes = True
 
 class TicketWithCategory(TicketOut):
-    category: "CategoryOut" 
+    category: CategoryOut

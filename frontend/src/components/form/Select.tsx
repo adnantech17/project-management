@@ -1,16 +1,17 @@
 import React, { FC, SelectHTMLAttributes } from "react";
 
 interface SelectOption {
-  label: string;
   value: string;
+  label: string;
 }
 
-interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'children'> {
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
-  id?: string;
+  className?: string;
   options: SelectOption[];
   placeholder?: string;
+  readonly?: boolean;
 }
 
 const Select: FC<SelectProps> = ({
@@ -20,6 +21,7 @@ const Select: FC<SelectProps> = ({
   id,
   options,
   placeholder,
+  readonly = false,
   ...props
 }) => {
   const selectId = id || label?.toLowerCase().replace(/\s+/g, "-");
@@ -29,7 +31,10 @@ const Select: FC<SelectProps> = ({
   const errorClasses = error
     ? "border-red-300 focus:ring-red-500 focus:border-red-500"
     : "border-gray-300";
-  const selectClasses = `${baseClasses} ${errorClasses} ${className}`;
+  const readonlyClasses = readonly
+    ? "bg-gray-50 text-gray-700 cursor-not-allowed"
+    : "";
+  const selectClasses = `${baseClasses} ${errorClasses} ${readonlyClasses} ${className}`;
 
   return (
     <div className="space-y-1">
@@ -41,7 +46,13 @@ const Select: FC<SelectProps> = ({
           {label}
         </label>
       )}
-      <select id={selectId} className={selectClasses} {...props}>
+      <select
+        id={selectId}
+        className={selectClasses}
+        disabled={readonly}
+        tabIndex={readonly ? -1 : undefined}
+        {...props}
+      >
         {placeholder && (
           <option value="" disabled>
             {placeholder}
@@ -58,4 +69,4 @@ const Select: FC<SelectProps> = ({
   );
 };
 
-export default Select; 
+export default Select;

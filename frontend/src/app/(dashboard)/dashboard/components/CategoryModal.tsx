@@ -1,7 +1,7 @@
 import React, { FC, FormEvent, useState } from "react";
 import Modal from "@/components/Modal";
 import Button from "@/components/Button";
-import Input from "@/components/Input";
+import Input from "@/components/form/Input";
 import { CreateCategoryForm } from "@/types/forms";
 
 const CategoryModal: FC<{
@@ -9,7 +9,6 @@ const CategoryModal: FC<{
   onClose: () => void;
   onSubmit: (data: CreateCategoryForm) => void;
 }> = ({ isOpen, onClose, onSubmit }) => {
-  
   const [formData, setFormData] = useState<CreateCategoryForm>({
     name: "",
     color: "#3B82F6",

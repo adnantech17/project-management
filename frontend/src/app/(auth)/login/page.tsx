@@ -7,8 +7,8 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Button from "@/components/Button";
-import Input from "@/components/Input";
-import PasswordInput from "@/components/PasswordInput";
+import Input from "@/components/form/Input";
+import PasswordInput from "@/components/form/PasswordInput";
 import type { LoginFormInputs } from "@/types/forms";
 
 export default function LoginPage() {
@@ -127,10 +127,7 @@ export default function LoginPage() {
 
             <p className="mt-6 text-center text-sm text-gray-600">
               Don't have an account?{" "}
-              <a
-                href="/register"
-                className="text-blue-600 hover:text-blue-500"
-              >
+              <a href="/register" className="text-blue-600 hover:text-blue-500">
                 Sign Up
               </a>
             </p>

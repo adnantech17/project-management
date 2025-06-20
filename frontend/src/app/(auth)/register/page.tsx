@@ -5,15 +5,19 @@ import { useForm } from "react-hook-form";
 import { register as registerService } from "@/service/auth";
 import { Moon } from "lucide-react";
 import Button from "@/components/Button";
-import Input from "@/components/Input";
-import PasswordInput from "@/components/PasswordInput";
+import Input from "@/components/form/Input";
+import PasswordInput from "@/components/form/PasswordInput";
 import type { RegisterFormInputs } from "@/types/forms";
 import Link from "next/link";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [error, setError] = useState("");
-  const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormInputs>();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormInputs>();
 
   async function onSubmit(data: RegisterFormInputs) {
     setError("");
@@ -31,14 +35,18 @@ export default function RegisterPage() {
         <div className="mx-auto w-full max-w-sm lg:w-96">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Register</h2>
-            <p className="text-gray-600 mb-8">Create your account to get started!</p>
+            <p className="text-gray-600 mb-8">
+              Create your account to get started!
+            </p>
             <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
               <Input
                 label="First Name*"
                 type="text"
                 placeholder="First Name"
                 error={errors.firstName?.message}
-                {...register("firstName", { required: "First name is required" })}
+                {...register("firstName", {
+                  required: "First name is required",
+                })}
               />
 
               <Input
@@ -87,10 +95,7 @@ export default function RegisterPage() {
             </form>
             <p className="mt-6 text-center text-sm text-gray-600">
               Already have an account?{" "}
-              <a
-                href="/login"
-                className="text-blue-600 hover:text-blue-500"
-              >
+              <a href="/login" className="text-blue-600 hover:text-blue-500">
                 Sign In
               </a>
             </p>
@@ -102,8 +107,18 @@ export default function RegisterPage() {
           <div className="text-center text-white">
             <div className="mb-8">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 rounded-2xl backdrop-blur-sm mb-6">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                <svg
+                  className="w-8 h-8 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                  />
                 </svg>
               </div>
               <h1 className="text-4xl font-bold mb-2">AD Project Management</h1>
@@ -125,4 +140,4 @@ export default function RegisterPage() {
       </Button>
     </div>
   );
-} 
+}
