@@ -36,13 +36,42 @@ class TicketService:
         self.db.refresh(db_ticket)
         return db_ticket
 
-    def get_tickets(self, user_id: uuid.UUID, category_id: Optional[uuid.UUID] = None) -> List[Ticket]:
+    def get_tickets(self, user_id: uuid.UUID, category_id: Optional[uuid.UUID] = None, page: int = 0, page_size: int = 0) -> dict:
         query = self.db.query(Ticket).filter(Ticket.user_id == user_id)
         
         if category_id:
             query = query.filter(Ticket.category_id == category_id)
             
-        return query.order_by(Ticket.position).all()
+        query = query.order_by(Ticket.position)
+        
+        # If page_size is 0, return all tickets (backward compatibility)
+        if page_size == 0:
+            tickets = query.all()
+            return {
+                "items": tickets,
+                "total": len(tickets),
+                "page": 1,
+                "page_size": len(tickets) if tickets else 0,
+                "total_pages": 1
+            }
+        
+        # Get total count
+        total = query.count()
+        
+        # Calculate pagination
+        total_pages = (total + page_size - 1) // page_size if total > 0 else 1
+        offset = (page - 1) * page_size
+        
+        # Get paginated results
+        tickets = query.offset(offset).limit(page_size).all()
+        
+        return {
+            "items": tickets,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": total_pages
+        }
 
     def get_ticket(self, ticket_id: uuid.UUID, user_id: uuid.UUID) -> Optional[Ticket]:
         return self.db.query(Ticket).filter(
@@ -96,7 +125,7 @@ class TicketService:
                         db_ticket.category_id = new_category_id
 
         self.db.commit()
-        return self.get_tickets(user_id)
+        return self.get_tickets(user_id)["items"]
 
     def drag_drop_ticket(self, ticket_id: uuid.UUID, target_category_id: uuid.UUID, target_position: int, user_id: uuid.UUID) -> Optional[Ticket]:
         db_ticket = self.get_ticket(ticket_id, user_id)

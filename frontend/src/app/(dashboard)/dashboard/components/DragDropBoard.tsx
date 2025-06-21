@@ -79,7 +79,7 @@ const DragDropBoard: FC<DragDropBoardProps> = ({
       await dragDropTicket(ticketId, categoryId, targetPosition);
       
       const response = await getTickets();
-      onTicketsUpdate(response.data);
+      onTicketsUpdate(response.data.items);
     } catch (err: any) {
       console.error("Error moving ticket:", err);
       onError("Failed to move ticket. Please try again.");

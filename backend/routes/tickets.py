@@ -56,19 +56,25 @@ def create_ticket(
     
     return created_ticket
 
-@router.get("/", response_model=List[TicketOut])
+@router.get("/")
 def get_tickets(
     request: Request,
     category_id: Optional[uuid.UUID] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(0, ge=0),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    log_request(request, {"category_id": str(category_id) if category_id else None})
+    log_request(request, {
+        "category_id": str(category_id) if category_id else None,
+        "page": page,
+        "page_size": page_size
+    })
     
     ticket_service = TicketService(db)
-    tickets = ticket_service.get_tickets(current_user.id, category_id)
+    result = ticket_service.get_tickets(current_user.id, category_id, page, page_size)
     
-    return tickets
+    return result
 
 @router.put("/drag-drop", response_model=TicketOut)
 def drag_drop_ticket(

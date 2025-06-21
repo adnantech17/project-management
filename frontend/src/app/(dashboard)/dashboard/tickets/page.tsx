@@ -1,35 +1,121 @@
 "use client";
 
-import React, { FC } from "react";
+import React, { FC, useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
+import { ColumnDef } from "@tanstack/react-table";
+import { Calendar } from "lucide-react";
 import Button from "@/components/Button";
+import { Table } from "@/components/table";
+import { Ticket } from "@/types/models";
+import { getTicketsPaginated } from "@/service/tickets";
 import { useRouter } from "next/navigation";
 
 const AllTicketsPage: FC = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  const currentPage = Number(searchParams.get("page")) || 1;
+  const pageSize = Number(searchParams.get("pageSize")) || 10;
+
+  const handleRowClick = (ticket: Ticket) => {
+    router.push(`/dashboard/tickets/${ticket.id}`);
+  };
+
+  const columns = useMemo<ColumnDef<Ticket>[]>(
+    () => [
+      {
+        accessorKey: "title",
+        header: "Title",
+        cell: ({ row }) => (
+          <div className="font-medium text-gray-900 cursor-pointer hover:text-blue-600">
+            {row.original.title}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "category",
+        header: "Category",
+        cell: ({ row }) => (
+          <div className="flex items-center space-x-2">
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: row.original.category?.color || "#6B7280" }}
+            />
+            <span className="text-gray-900">{row.original.category?.name || "No category"}</span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "expiry_date",
+        header: "Expiry Date",
+        cell: ({ row }) => {
+          const expiryDate = row.original.expiry_date;
+          if (!expiryDate) return <span className="text-gray-400">No expiry</span>;
+
+          const date = new Date(expiryDate);
+          const isOverdue = date < new Date();
+          const isExpiringSoon = date < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+
+          return (
+            <div className={`flex items-center space-x-1 ${
+              isOverdue ? "text-red-600" : isExpiringSoon ? "text-orange-600" : "text-gray-600"
+            }`}>
+              <Calendar size={14} />
+              <span>{date.toLocaleDateString()}</span>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "created_at",
+        header: "Created",
+        cell: ({ row }) => (
+          <span className="text-gray-600">
+            {new Date(row.original.created_at).toLocaleDateString()}
+          </span>
+        ),
+      },
+    ],
+    [router]
+  );
+
+  const fetchTickets = async () => {
+    try {
+      setLoading(true);
+      const response = await getTicketsPaginated(currentPage, pageSize);
+      
+      setTickets(response.data.items);
+      setTotalItems(response.data.total);
+    } catch (error) {
+      console.error("Failed to fetch tickets:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTickets();
+  }, [currentPage, pageSize]);
 
   return (
     <div className="flex flex-col h-full">
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">All Tickets</h1>
-          <Button onClick={() => router.push("/dashboard")} variant="outline">
-            Back to Dashboard
-          </Button>
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center bg-gray-50">
-        <div className="max-w-2xl mx-auto text-center px-6">
-          <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
-            <h3 className="text-lg font-semibold text-blue-900 mb-2">
-              🚀 Coming Soon
-            </h3>
-            <p className="text-blue-700">
-              This feature is currently under development. In the meantime, you
-              can manage your tickets from the main dashboard.
-            </p>
-          </div>
-        </div>
+      <div className="flex-1 p-6 bg-gray-50">
+        <Table
+          data={tickets}
+          columns={columns}
+          totalItems={totalItems}
+          loading={loading}
+          onRowClick={handleRowClick}
+        />
       </div>
     </div>
   );

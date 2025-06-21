@@ -46,7 +46,7 @@ const DashboardPage: FC = () => {
       ]);
 
       setCategories(categoriesResponse.data);
-      setTickets(ticketsResponse.data);
+      setTickets(ticketsResponse.data.items);
     } catch (err: any) {
       console.error("Error loading data:", err);
       setError("Failed to load data. Please try again.");

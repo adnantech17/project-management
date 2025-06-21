@@ -2,9 +2,31 @@ import api from "@/lib/axios";
 import { Ticket } from "@/types/models";
 import { CreateTicketForm } from "@/types/forms";
 
-export async function getTickets(categoryId?: string) {
-  const params = categoryId ? { category_id: categoryId } : {};
-  return api.get<Ticket[]>("/tickets", { params });
+export async function getTickets(categoryId?: string, page?: number, pageSize?: number) {
+  const params: any = {};
+  if (categoryId) {
+    params.category_id = categoryId;
+  }
+
+  if (page) {
+    params.page = page;
+  }
+
+  if (pageSize) {
+    params.page_size = pageSize;
+  }
+  
+  return api.get<{
+    items: Ticket[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+  }>("/tickets", { params });
+}
+
+export async function getTicketsPaginated(page: number = 1, pageSize: number = 10, categoryId?: string) {
+  return getTickets(categoryId, page, pageSize);
 }
 
 export async function getTicket(ticketId: string) {
