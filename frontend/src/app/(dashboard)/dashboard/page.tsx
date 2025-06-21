@@ -6,7 +6,7 @@ import { CreateTicketForm, CreateCategoryForm } from "@/types/forms";
 import { Category, Ticket } from "@/types/models";
 import TicketModal from "@/app/(dashboard)/dashboard/components/TicketModal";
 import CategoryModal from "@/app/(dashboard)/dashboard/components/CategoryModal";
-import CategoryColumn from "@/app/(dashboard)/dashboard/components/CategoryColumn";
+import DragDropBoard from "@/app/(dashboard)/dashboard/components/DragDropBoard";
 import Button from "@/components/Button";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -100,6 +100,7 @@ const DashboardPage: FC = () => {
   ) => {
     try {
       const response = await updateTicket(ticketId, data);
+      
       setTickets(
         tickets.map((ticket) =>
           ticket.id === ticketId ? response.data : ticket
@@ -115,18 +116,21 @@ const DashboardPage: FC = () => {
   const handleCreateCategory = async (data: CreateCategoryForm) => {
     try {
       const response = await createCategory(data);
-
       setCategories([...categories, response.data]);
       setError("");
     } catch (err: any) {
       console.error("Error creating category:", err);
-
       setError("Failed to create category. Please try again.");
     }
   };
 
-  const getTicketsForCategory = (categoryId: string): Ticket[] => {
-    return tickets.filter((ticket) => ticket.category_id === categoryId);
+  const handleTicketsUpdate = (updatedTickets: Ticket[]) => {
+    setTickets(updatedTickets);
+    setError("");
+  };
+
+  const handleError = (errorMessage: string) => {
+    setError(errorMessage);
   };
 
   const handleCloseTicketModal = () => {
@@ -197,19 +201,16 @@ const DashboardPage: FC = () => {
             </Button>
           </div>
         ) : (
-          <div className="flex space-x-6 overflow-x-auto pb-6">
-            {categories.map((category) => (
-              <CategoryColumn
-                key={category.id}
-                category={category}
-                tickets={getTicketsForCategory(category.id)}
-                onAddTicket={() => handleAddTicket(category.id)}
-                onViewTicket={handleViewTicket}
-                onEditTicket={handleEditTicket}
-                onViewTicketDetails={handleViewTicketDetails}
-              />
-            ))}
-          </div>
+          <DragDropBoard
+            categories={categories}
+            tickets={tickets}
+            onTicketsUpdate={handleTicketsUpdate}
+            onAddTicket={handleAddTicket}
+            onViewTicket={handleViewTicket}
+            onEditTicket={handleEditTicket}
+            onViewTicketDetails={handleViewTicketDetails}
+            onError={handleError}
+          />
         )}
       </main>
 

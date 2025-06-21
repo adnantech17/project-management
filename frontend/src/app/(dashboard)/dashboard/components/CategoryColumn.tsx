@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { FC, useState } from "react";
 import { Plus, MoreHorizontal } from "lucide-react";
 import TicketCard from "@/app/(dashboard)/dashboard/components/TicketCard";
 import Button from "@/components/Button";
@@ -11,6 +11,8 @@ interface CategoryColumnProps {
   onViewTicket: (ticket: Ticket) => void;
   onEditTicket: (ticket: Ticket) => void;
   onViewTicketDetails: (ticket: Ticket) => void;
+  onDropTicket: (ticketId: string, categoryId: string) => void;
+  draggedTicketId?: string;
 }
 
 const CategoryColumn: FC<CategoryColumnProps> = ({
@@ -20,9 +22,42 @@ const CategoryColumn: FC<CategoryColumnProps> = ({
   onViewTicket,
   onEditTicket,
   onViewTicketDetails,
+  onDropTicket,
+  draggedTicketId,
 }) => {
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const ticketId = e.dataTransfer.getData("text/plain");
+
+    if (ticketId) {
+      onDropTicket(ticketId, category.id);
+    }
+  };
+
   return (
-    <div className="bg-gray-50 rounded-lg p-4 min-w-80">
+    <div
+      className={`bg-gray-50 rounded-lg p-4 min-w-80 min-h-[80vh] transition-all ${
+        isDragOver ? "bg-blue-50 border-2 border-blue-300 border-dashed" : ""
+      }`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           <div
@@ -47,6 +82,7 @@ const CategoryColumn: FC<CategoryColumnProps> = ({
             onView={onViewTicket}
             onEdit={onEditTicket}
             onViewDetails={onViewTicketDetails}
+            isDragging={draggedTicketId === ticket.id}
           />
         ))}
 

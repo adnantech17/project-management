@@ -7,6 +7,7 @@ interface TicketCardProps {
   onView: (ticket: Ticket) => void;
   onEdit: (ticket: Ticket) => void;
   onViewDetails: (ticket: Ticket) => void;
+  isDragging?: boolean;
 }
 
 const TicketCard: FC<TicketCardProps> = ({
@@ -14,6 +15,7 @@ const TicketCard: FC<TicketCardProps> = ({
   onView,
   onEdit,
   onViewDetails,
+  isDragging = false,
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -73,10 +75,19 @@ const TicketCard: FC<TicketCardProps> = ({
     onViewDetails(ticket);
   };
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData("text/plain", ticket.id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
   return (
     <div
-      className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer relative"
+      className={`bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-all cursor-pointer relative ${
+        isDragging ? "opacity-50 transform rotate-2" : ""
+      }`}
       onClick={handleCardClick}
+      draggable
+      onDragStart={handleDragStart}
     >
       <div className="flex justify-between items-start mb-2">
         <h3 className="font-medium text-gray-900 text-sm leading-5 flex-1 mr-2">

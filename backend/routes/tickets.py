@@ -129,3 +129,4 @@ def reorder_tickets(
     updated_tickets = ticket_service.reorder_tickets(current_user.id, ticket_positions)
     
     return updated_tickets
+ 

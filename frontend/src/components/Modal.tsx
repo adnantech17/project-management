@@ -23,3 +23,4 @@ const Modal: FC<ModalProps> = ({ isOpen, onClose, children, className }) => {
 };
 
 export default Modal;
+ 
