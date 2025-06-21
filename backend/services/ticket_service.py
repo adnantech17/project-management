@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, update
 from typing import List, Optional
 import uuid
 
@@ -97,3 +97,79 @@ class TicketService:
 
         self.db.commit()
         return self.get_tickets(user_id)
+
+    def drag_drop_ticket(self, ticket_id: uuid.UUID, target_category_id: uuid.UUID, target_position: int, user_id: uuid.UUID) -> Optional[Ticket]:
+        db_ticket = self.get_ticket(ticket_id, user_id)
+        if not db_ticket:
+            return None
+
+        target_category = self.db.query(Category).filter(
+            and_(Category.id == target_category_id, Category.user_id == user_id)
+        ).first()
+        if not target_category:
+            return None
+
+        old_category_id = db_ticket.category_id
+        old_position = db_ticket.position
+
+        if old_category_id == target_category_id:
+            if old_position == target_position:
+                return db_ticket
+            
+            if old_position < target_position:
+                self.db.execute(
+                    update(Ticket)
+                    .where(
+                        and_(
+                            Ticket.category_id == target_category_id,
+                            Ticket.position > old_position,
+                            Ticket.position <= target_position,
+                            Ticket.user_id == user_id
+                        )
+                    )
+                    .values(position=Ticket.position - 1)
+                )
+            else:
+                self.db.execute(
+                    update(Ticket)
+                    .where(
+                        and_(
+                            Ticket.category_id == target_category_id,
+                            Ticket.position >= target_position,
+                            Ticket.position < old_position,
+                            Ticket.user_id == user_id
+                        )
+                    )
+                    .values(position=Ticket.position + 1)
+                )
+        else:
+            self.db.execute(
+                update(Ticket)
+                .where(
+                    and_(
+                        Ticket.category_id == old_category_id,
+                        Ticket.position > old_position,
+                        Ticket.user_id == user_id
+                    )
+                )
+                .values(position=Ticket.position - 1)
+            )
+            
+            self.db.execute(
+                update(Ticket)
+                .where(
+                    and_(
+                        Ticket.category_id == target_category_id,
+                        Ticket.position >= target_position,
+                        Ticket.user_id == user_id
+                    )
+                )
+                .values(position=Ticket.position + 1)
+            )
+
+        db_ticket.category_id = target_category_id
+        db_ticket.position = target_position
+        
+        self.db.commit()
+        self.db.refresh(db_ticket)
+        return db_ticket

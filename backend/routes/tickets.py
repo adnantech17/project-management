@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Query, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import uuid
+from pydantic import BaseModel
 
 from schemas.ticket import TicketCreate, TicketUpdate, TicketOut, TicketWithCategory
 from database import SessionLocal
@@ -11,6 +12,11 @@ from models.user import User
 from utils.logger import log_request
 
 router = APIRouter(prefix="/tickets", tags=["tickets"])
+
+class DragDropRequest(BaseModel):
+    ticket_id: str
+    target_category_id: str
+    target_position: int
 
 def get_db():
     db = SessionLocal()
@@ -64,6 +70,42 @@ def get_tickets(
     
     return tickets
 
+@router.put("/drag-drop", response_model=TicketOut)
+def drag_drop_ticket(
+    request: Request,
+    drag_data: DragDropRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    log_request(request, drag_data.model_dump())
+    
+    ticket_service = TicketService(db)
+    updated_ticket = ticket_service.drag_drop_ticket(
+        uuid.UUID(drag_data.ticket_id),
+        uuid.UUID(drag_data.target_category_id),
+        drag_data.target_position,
+        current_user.id
+    )
+    
+    if not updated_ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found or invalid category")
+    
+    return updated_ticket
+
+@router.put("/reorder", response_model=List[TicketOut])
+def reorder_tickets(
+    request: Request,
+    ticket_positions: List[dict],
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    log_request(request, {"positions": ticket_positions})
+    
+    ticket_service = TicketService(db)
+    updated_tickets = ticket_service.reorder_tickets(current_user.id, ticket_positions)
+    
+    return updated_tickets
+
 @router.get("/{ticket_id}", response_model=TicketWithCategory)
 def get_ticket(
     request: Request,
@@ -115,18 +157,4 @@ def delete_ticket(
         raise HTTPException(status_code=404, detail="Ticket not found")
     
     return {"message": "Ticket deleted successfully"}
-
-@router.put("/reorder", response_model=List[TicketOut])
-def reorder_tickets(
-    request: Request,
-    ticket_positions: List[dict],
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    log_request(request, {"positions": ticket_positions})
-    
-    ticket_service = TicketService(db)
-    updated_tickets = ticket_service.reorder_tickets(current_user.id, ticket_positions)
-    
-    return updated_tickets
  

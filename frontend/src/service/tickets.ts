@@ -25,4 +25,12 @@ export async function deleteTicket(ticketId: string) {
 
 export async function reorderTickets(positions: Array<{ id: string; position: number; category_id?: string }>) {
   return api.put<Ticket[]>("/tickets/reorder", positions);
+}
+
+export async function dragDropTicket(ticketId: string, targetCategoryId: string, targetPosition: number) {
+  return api.put<Ticket>("/tickets/drag-drop", {
+    ticket_id: ticketId,
+    target_category_id: targetCategoryId,
+    target_position: targetPosition
+  });
 } 

@@ -1,7 +1,7 @@
 import React, { FC, useState, useEffect } from "react";
 import { Category, Ticket } from "@/types/models";
 import CategoryColumn from "./CategoryColumn";
-import { updateTicket } from "@/service/tickets";
+import { dragDropTicket, getTickets } from "@/service/tickets";
 
 interface DragDropBoardProps {
   categories: Category[];
@@ -25,15 +25,24 @@ const DragDropBoard: FC<DragDropBoardProps> = ({
   onError,
 }) => {
   const [draggedTicketId, setDraggedTicketId] = useState<string>("");
+  const [isDropping, setIsDropping] = useState(false);
 
   useEffect(() => {
     const handleDragStart = (e: DragEvent) => {
-      const ticketId = (e.dataTransfer as DataTransfer).getData("text/plain");
-      setDraggedTicketId(ticketId);
+      if (e.dataTransfer) {
+        const ticketId = e.dataTransfer.getData("text/plain");
+
+        if (ticketId) {
+          setDraggedTicketId(ticketId);
+        }
+      }
     };
 
     const handleDragEnd = () => {
-      setDraggedTicketId("");
+      setTimeout(() => {
+        setDraggedTicketId("");
+        setIsDropping(false);
+      }, 100);
     };
 
     document.addEventListener("dragstart", handleDragStart);
@@ -45,33 +54,44 @@ const DragDropBoard: FC<DragDropBoardProps> = ({
     };
   }, []);
 
-  const handleDropTicket = async (ticketId: string, newCategoryId: string) => {
+  const handleDropTicket = async (categoryId: string, ticketId: string, dropPosition?: number) => {
+    console.log(categoryId, ticketId, dropPosition);
+    if (isDropping) return;
+    
+    setIsDropping(true);
+    
     const ticket = tickets.find((t) => t.id === ticketId);
 
-    if (!ticket || ticket.category_id === newCategoryId) return;
+    if (!ticket) {
+      setIsDropping(false);
+      return;
+    }
 
-    const updatedTicketData = {
-      title: ticket.title,
-      description: ticket.description,
-      expiry_date: ticket.expiry_date,
-      category_id: newCategoryId,
-    };
+    const categoryTickets = getTicketsForCategory(categoryId);
+    const targetPosition = dropPosition !== undefined ? dropPosition : categoryTickets.length;
+
+    if (ticket.category_id === categoryId && ticket.position === targetPosition) {
+      setIsDropping(false);
+      return;
+    }
 
     try {
-      const response = await updateTicket(ticketId, updatedTicketData);      
-      const updatedTickets = tickets.map((t) =>
-        t.id === ticketId ? response.data : t
-      );
-
-      onTicketsUpdate(updatedTickets);
+      await dragDropTicket(ticketId, categoryId, targetPosition);
+      
+      const response = await getTickets();
+      onTicketsUpdate(response.data);
     } catch (err: any) {
       console.error("Error moving ticket:", err);
       onError("Failed to move ticket. Please try again.");
+    } finally {
+      setIsDropping(false);
     }
   };
 
   const getTicketsForCategory = (categoryId: string): Ticket[] => {
-    return tickets.filter((ticket) => ticket.category_id === categoryId);
+    return tickets
+      .filter((ticket) => ticket.category_id === categoryId)
+      .sort((a, b) => a.position - b.position);
   };
 
   return (
@@ -85,7 +105,7 @@ const DragDropBoard: FC<DragDropBoardProps> = ({
           onViewTicket={onViewTicket}
           onEditTicket={onEditTicket}
           onViewTicketDetails={onViewTicketDetails}
-          onDropTicket={handleDropTicket}
+          onDropTicket={(ticketId, position) => handleDropTicket(category.id, ticketId, position)}
           draggedTicketId={draggedTicketId}
         />
       ))}
