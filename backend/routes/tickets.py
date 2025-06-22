@@ -4,7 +4,8 @@ from typing import List, Optional
 import uuid
 from pydantic import BaseModel
 
-from schemas.ticket import TicketCreate, TicketUpdate, TicketOut, TicketWithCategory
+from schemas.ticket import TicketCreate, TicketUpdate, TicketOut, TicketWithCategory, TicketWithCategoryAndHistory
+from schemas.ticket_history import TicketHistoryOut
 from database import SessionLocal
 from services.ticket_service import TicketService
 from utils.jwt import decode_access_token
@@ -112,17 +113,23 @@ def reorder_tickets(
     
     return updated_tickets
 
-@router.get("/{ticket_id}", response_model=TicketWithCategory)
+@router.get("/{ticket_id}", response_model=TicketWithCategoryAndHistory)
 def get_ticket(
     request: Request,
     ticket_id: uuid.UUID,
+    include_history: bool = Query(True, description="Include ticket history"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    log_request(request, {"ticket_id": str(ticket_id)})
+    log_request(request, {"ticket_id": str(ticket_id), "include_history": include_history})
     
     ticket_service = TicketService(db)
-    ticket = ticket_service.get_ticket(ticket_id, current_user.id)
+    
+    if include_history:
+        ticket = ticket_service.get_ticket_with_history(ticket_id, current_user.id)
+    else:
+        ticket = ticket_service.get_ticket(ticket_id, current_user.id)
+        ticket.history = []
     
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
@@ -163,4 +170,19 @@ def delete_ticket(
         raise HTTPException(status_code=404, detail="Ticket not found")
     
     return {"message": "Ticket deleted successfully"}
- 
+
+@router.get("/history/all", response_model=List[TicketHistoryOut])
+def get_all_activity_logs(
+    request: Request,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get all activity logs for the current user across all tickets"""
+    log_request(request, {"page": page, "page_size": page_size})
+    
+    ticket_service = TicketService(db)
+    activity_logs = ticket_service.get_all_user_activity_logs(current_user.id, page, page_size)
+    
+    return activity_logs

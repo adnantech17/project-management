@@ -2,18 +2,18 @@
 
 import React, { FC, useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Ticket, Category } from "@/types/models";
+import { Ticket, Category, TicketHistory as TicketHistoryType } from "@/types/models";
 import { getTicket, updateTicket } from "@/service/tickets";
 import { getCategories } from "@/service/categories";
 import Button from "@/components/Button";
 import Input from "@/components/form/Input";
 import TextArea from "@/components/form/TextArea";
+import TicketHistory from "@/components/TicketHistory";
 import {
   ArrowLeft,
   Clock,
   Edit,
   User,
-  History,
   AlertCircle,
   CheckCircle,
   Save,
@@ -27,7 +27,7 @@ const TicketDetailPage: FC = () => {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  const [ticket, setTicket] = useState<Ticket | null>(null);
+  const [ticket, setTicket] = useState<(Ticket & { history?: TicketHistoryType[] }) | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>("");
@@ -165,6 +165,8 @@ const TicketDetailPage: FC = () => {
   const getSelectedCategory = () => {
     return categories.find((cat) => cat.id === formData.category_id);
   };
+
+
 
   if (isLoading) {
     return (
@@ -376,17 +378,10 @@ const TicketDetailPage: FC = () => {
                 </div>
 
                 <div className="border-t pt-6 mt-6">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <History className="h-5 w-5 text-gray-400" />
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      Activity History
-                    </h2>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-gray-500 text-sm">
-                      Activity history feature coming soon...
-                    </p>
-                  </div>
+                  <TicketHistory
+                    history={ticket.history || []}
+                    showFullHistory={true}
+                  />
                 </div>
               </div>
             </div>

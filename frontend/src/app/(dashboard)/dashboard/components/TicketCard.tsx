@@ -1,6 +1,6 @@
 import React, { FC, useState, useRef, useEffect } from "react";
 import { Ticket } from "@/types/models";
-import { Calendar, Edit, Eye, MoreHorizontal } from "lucide-react";
+import { Calendar, Edit, Eye, MoreHorizontal, Clock } from "lucide-react";
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -20,11 +20,11 @@ const TicketCard: FC<TicketCardProps> = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const isExpiringSoon = ticket.expiry_date && 
+  const isExpiringSoon = ticket.expiry_date &&
     new Date(ticket.expiry_date) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
   const isOverdue = ticket.expiry_date && new Date(ticket.expiry_date) < new Date();
 
-  const formatDate = (dateString: string) => 
+  const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -33,7 +33,10 @@ const TicketCard: FC<TicketCardProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setShowDropdown(false);
       }
     };
@@ -67,9 +70,9 @@ const TicketCard: FC<TicketCardProps> = ({
       className={`
         bg-white rounded-lg p-4 border border-gray-200 cursor-pointer 
         transition-all duration-200 ease-out
-        ${isDragging 
-          ? "opacity-50 scale-95 rotate-1 shadow-xl ring-2 ring-blue-400/50" 
-          : "hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
+        ${isDragging
+            ? "opacity-50 scale-95 rotate-1 shadow-xl ring-2 ring-blue-400/50"
+            : "hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
         }
       `}
       onClick={handleClick}
@@ -78,7 +81,7 @@ const TicketCard: FC<TicketCardProps> = ({
     >
       <div className="flex justify-between items-start mb-2">
         <h3 className="font-medium text-gray-900 text-sm leading-5 flex-1 mr-2">
-        {ticket.title}
+          {ticket.title}
         </h3>
         <div className="relative" ref={dropdownRef}>
           <button

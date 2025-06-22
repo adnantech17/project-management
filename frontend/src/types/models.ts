@@ -21,3 +21,16 @@ export interface Ticket {
   updated_at: string;
   category?: Category;
 }
+
+export interface TicketHistory {
+  id: string;
+  ticket_id: string;
+  user_id: string;
+  action_type: "created" | "moved" | "updated" | "deleted";
+  old_values?: Record<string, any>;
+  new_values?: Record<string, any>;
+  from_category_name?: string;
+  to_category_name?: string;
+  created_at: string;
+  ticket_title?: string;
+}

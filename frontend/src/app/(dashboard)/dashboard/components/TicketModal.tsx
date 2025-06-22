@@ -4,14 +4,20 @@ import Button from "@/components/Button";
 import Input from "@/components/form/Input";
 import TextArea from "@/components/form/TextArea";
 import Select from "@/components/form/Select";
+import TicketHistory from "@/components/TicketHistory";
 import { CreateTicketForm } from "@/types/forms";
-import { Category, Ticket } from "@/types/models";
+import {
+  Category,
+  Ticket,
+  TicketHistory as TicketHistoryType,
+} from "@/types/models";
 import { Clock, ExternalLink, Edit } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { formatDateForInput } from "@/utils/date";
+import { formatDateForInput, formatDateTime } from "@/utils/date";
+import { getTicket } from "@/service/tickets";
 
 interface TicketModalProps {
-  ticket?: Ticket | null;
+  ticket?: (Ticket & { history?: TicketHistoryType[] }) | null;
   isOpen: boolean;
   onClose: () => void;
   categories: Category[];
@@ -38,18 +44,46 @@ const TicketModal: FC<TicketModalProps> = ({
     expiry_date: "",
     category_id: categories[0]?.id || "",
   });
+  const [ticketWithHistory, setTicketWithHistory] = useState<
+    (Ticket & { history?: TicketHistoryType[] }) | null
+  >(null);
+  const [isLoadingTicket, setIsLoadingTicket] = useState(false);
 
   const isReadonly = mode === "view";
   const isEdit = mode === "edit";
   const isCreate = mode === "create";
 
+  // Load ticket data with history when modal opens in view/edit mode
   useEffect(() => {
-    if (ticket && (isEdit || mode === "view")) {
+    const loadTicketWithHistory = async () => {
+      if (ticket && (mode === "view" || mode === "edit") && isOpen) {
+        setIsLoadingTicket(true);
+        try {
+          const response = await getTicket(ticket.id, true);
+          setTicketWithHistory(response.data);
+        } catch (error) {
+          console.error("Failed to load ticket with history:", error);
+          setTicketWithHistory(ticket);
+        } finally {
+          setIsLoadingTicket(false);
+        }
+      } else {
+        setTicketWithHistory(null);
+      }
+    };
+
+    loadTicketWithHistory();
+  }, [ticket, mode, isOpen]);
+
+  useEffect(() => {
+    const currentTicket = ticketWithHistory || ticket;
+
+    if (currentTicket && (isEdit || mode === "view")) {
       setFormData({
-        title: ticket.title,
-        description: ticket.description || "",
-        expiry_date: formatDateForInput(ticket.expiry_date),
-        category_id: ticket.category_id,
+        title: currentTicket.title,
+        description: currentTicket.description || "",
+        expiry_date: formatDateForInput(currentTicket.expiry_date),
+        category_id: currentTicket.category_id,
       });
     } else if (isCreate) {
       setFormData({
@@ -59,7 +93,7 @@ const TicketModal: FC<TicketModalProps> = ({
         category_id: categories[0]?.id || "",
       });
     }
-  }, [ticket, mode, isEdit, isCreate, categories, isOpen]);
+  }, [ticketWithHistory, ticket, mode, isEdit, isCreate, categories, isOpen]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -81,7 +115,10 @@ const TicketModal: FC<TicketModalProps> = ({
   };
 
   const handleViewFullDetails = () => {
-    if (!ticket) return;
+    if (!ticket) {
+      return;
+    }
+
     onClose();
     router.push(`/dashboard/tickets/${ticket.id}`);
   };
@@ -120,32 +157,16 @@ const TicketModal: FC<TicketModalProps> = ({
     return category?.color || "#3B82F6";
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const currentTicket = ticketWithHistory || ticket;
 
   const isExpiringSoon =
-    ticket?.expiry_date &&
-    new Date(ticket.expiry_date) <
+    currentTicket?.expiry_date &&
+    new Date(currentTicket.expiry_date) <
       new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
 
   const isOverdue =
-    ticket?.expiry_date && new Date(ticket.expiry_date) < new Date();
+    currentTicket?.expiry_date &&
+    new Date(currentTicket.expiry_date) < new Date();
 
   const getStatusInfo = () => {
     if (isOverdue) {
@@ -173,7 +194,9 @@ const TicketModal: FC<TicketModalProps> = ({
   };
 
   const statusInfo =
-    (mode === "view" || mode === "edit") && ticket ? getStatusInfo() : null;
+    (mode === "view" || mode === "edit") && currentTicket
+      ? getStatusInfo()
+      : null;
 
   return (
     <Modal
@@ -255,7 +278,7 @@ const TicketModal: FC<TicketModalProps> = ({
             readonly={isReadonly}
           />
 
-          {(mode === "view" || mode === "edit") && ticket && (
+          {(mode === "view" || mode === "edit") && currentTicket && (
             <div className="space-y-4 pt-4 border-t">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center space-x-3">
@@ -265,7 +288,7 @@ const TicketModal: FC<TicketModalProps> = ({
                   <div>
                     <p className="text-xs font-medium text-gray-500">Created</p>
                     <p className="text-sm text-gray-900">
-                      {formatDateTime(ticket.created_at)}
+                      {formatDateTime(currentTicket.created_at)}
                     </p>
                   </div>
                 </div>
@@ -279,13 +302,33 @@ const TicketModal: FC<TicketModalProps> = ({
                       Last Updated
                     </p>
                     <p className="text-sm text-gray-900">
-                      {formatDateTime(ticket.updated_at)}
+                      {formatDateTime(currentTicket.updated_at)}
                     </p>
                   </div>
                 </div>
               </div>
             </div>
           )}
+
+          {(mode === "view" || mode === "edit") &&
+            ticketWithHistory?.history && (
+              <div className="pt-4 border-t">
+                {isLoadingTicket ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <span className="ml-2 text-sm text-gray-600">
+                      Loading history...
+                    </span>
+                  </div>
+                ) : (
+                  <TicketHistory
+                    history={ticketWithHistory.history}
+                    onViewFullHistory={handleViewFullDetails}
+                    className="pt-0"
+                  />
+                )}
+              </div>
+            )}
 
           <div className="flex justify-end space-x-3 pt-4">
             {mode === "view" ? (

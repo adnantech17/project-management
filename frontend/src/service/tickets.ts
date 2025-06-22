@@ -1,5 +1,5 @@
 import api from "@/lib/axios";
-import { Ticket } from "@/types/models";
+import { Ticket, TicketHistory } from "@/types/models";
 import { CreateTicketForm } from "@/types/forms";
 
 export async function getTickets(categoryId?: string, page?: number, pageSize?: number) {
@@ -29,8 +29,8 @@ export async function getTicketsPaginated(page: number = 1, pageSize: number = 1
   return getTickets(categoryId, page, pageSize);
 }
 
-export async function getTicket(ticketId: string) {
-  return api.get<Ticket>(`/tickets/${ticketId}`);
+export async function getTicket(ticketId: string, includeHistory: boolean = true) {
+  return api.get<Ticket & { history?: TicketHistory[] }>(`/tickets/${ticketId}?include_history=${includeHistory}`);
 }
 
 export async function createTicket(data: CreateTicketForm) {
@@ -55,4 +55,8 @@ export async function dragDropTicket(ticketId: string, targetCategoryId: string,
     target_category_id: targetCategoryId,
     target_position: targetPosition
   });
-} 
+}
+
+export async function getAllActivityLogs(page: number = 1, pageSize: number = 50) {
+  return api.get<TicketHistory[]>(`/tickets/history/all?page=${page}&page_size=${pageSize}`);
+}

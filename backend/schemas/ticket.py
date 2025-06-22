@@ -1,9 +1,10 @@
 from pydantic import BaseModel
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, List
 import uuid
 from datetime import datetime
 
 from .category import CategoryOut
+from .ticket_history import TicketHistoryOut
 
 class TicketBase(BaseModel):
     title: str
@@ -33,3 +34,6 @@ class TicketOut(TicketBase):
 
 class TicketWithCategory(TicketOut):
     category: CategoryOut
+
+class TicketWithCategoryAndHistory(TicketWithCategory):
+    history: List[TicketHistoryOut] = []

@@ -21,6 +21,7 @@ class Ticket(Base):
     # Relationships
     user = relationship("User", back_populates="tickets")
     category = relationship("Category", back_populates="tickets")
+    history = relationship("TicketHistory", back_populates="ticket", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Ticket(id={self.id}, title='{self.title}', category_id={self.category_id}, user_id={self.user_id})>" 

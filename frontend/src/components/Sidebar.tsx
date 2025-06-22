@@ -1,7 +1,7 @@
 import { FC } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Button from "./Button";
-import { Home, FileText, Settings, LogOut } from "lucide-react";
+import { Home, FileText, Settings, LogOut, History } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 const Sidebar: FC = () => {
@@ -19,6 +19,11 @@ const Sidebar: FC = () => {
       name: "All Tickets",
       path: "/dashboard/tickets",
       icon: FileText,
+    },
+    {
+      name: "Activity Log",
+      path: "/dashboard/activity",
+      icon: History,
     },
     {
       name: "Settings",

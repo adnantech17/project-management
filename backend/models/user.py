@@ -21,4 +21,4 @@ class User(Base):
 
     # Relationships
     categories = relationship("Category", back_populates="user", cascade="all, delete-orphan")
-    tickets = relationship("Ticket", back_populates="user", cascade="all, delete-orphan") 
+    tickets = relationship("Ticket", back_populates="user", cascade="all, delete-orphan")
