@@ -17,6 +17,15 @@ export interface CreateTicketForm {
   description?: string;
   expiry_date?: string;
   category_id: string;
+  assigned_user_ids: string[];
+}
+
+export interface EditTicketForm {
+  title?: string;
+  description?: string;
+  expiry_date?: string;
+  category_id?: string;
+  assigned_user_ids?: string[];
 }
 
 export interface CreateCategoryForm {

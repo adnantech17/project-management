@@ -1,4 +1,4 @@
-import React, { FC, useState } from "react";
+import React, { FC, Fragment, useState } from "react";
 import { Plus, MoreHorizontal } from "lucide-react";
 import TicketCard from "@/app/(dashboard)/dashboard/components/TicketCard";
 import Button from "@/components/Button";
@@ -135,7 +135,7 @@ const CategoryColumn: FC<CategoryColumnProps> = ({
         )}
         
         {tickets.map((ticket, index) => (
-          <React.Fragment key={ticket.id}>
+          <Fragment key={ticket.id}>
             <div
               style={getTicketStyle(ticket, index)}
               onDragOver={(e) => handleTicketDragOver(e, index)}
@@ -152,7 +152,7 @@ const CategoryColumn: FC<CategoryColumnProps> = ({
             {showDropIndicator(index + 1) && (
               <div className="h-1 bg-blue-400 rounded-full mx-2 animate-pulse" />
             )}
-          </React.Fragment>
+          </Fragment>
         ))}
 
         <div className="pt-2">

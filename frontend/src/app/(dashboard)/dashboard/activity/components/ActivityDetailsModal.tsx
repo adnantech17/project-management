@@ -1,4 +1,4 @@
-import React from "react";
+import React, { FC } from "react";
 import { TicketHistory } from "@/types/models";
 import { ArrowRight } from "lucide-react";
 import { formatDateTime } from "@/utils/date";
@@ -13,7 +13,7 @@ interface ActivityDetailsModalProps {
   activityLog: TicketHistory | null;
 }
 
-const ActivityDetailsModal: React.FC<ActivityDetailsModalProps> = ({
+const ActivityDetailsModal: FC<ActivityDetailsModalProps> = ({
   isOpen,
   onClose,
   activityLog,

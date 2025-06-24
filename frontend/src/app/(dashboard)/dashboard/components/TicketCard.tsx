@@ -1,6 +1,7 @@
 import React, { FC, useState, useRef, useEffect } from "react";
 import { Ticket } from "@/types/models";
-import { Calendar, Edit, Eye, MoreHorizontal, Clock } from "lucide-react";
+import { Calendar, Edit, Eye, MoreHorizontal, Users } from "lucide-react";
+import { getInitials, getProfileColor } from "@/utils/profile";
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -116,6 +117,33 @@ const TicketCard: FC<TicketCardProps> = ({
         <p className="text-gray-600 text-sm mb-3 line-clamp-2">
           {ticket.description}
         </p>
+      )}
+
+      {ticket.assigned_users && ticket.assigned_users.length > 0 && (
+        <div className="mb-3">
+          <div className="flex items-center space-x-1 text-xs text-gray-500 mb-2">
+            <Users size={12} />
+            <span>Assigned to:</span>
+          </div>
+          <div className="flex items-center gap-1 flex-wrap">
+            {ticket.assigned_users.slice(0, 4).map((user) => {
+              return (
+                <div
+                  key={user.id}
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium ${getProfileColor(user.username)}`}
+                  title={user.username}
+                >
+                  {getInitials(user.username)}
+                </div>
+              );
+            })}
+            {ticket.assigned_users.length > 4 && (
+              <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-xs font-medium">
+                +{ticket.assigned_users.length - 4}
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       <div className="flex items-center justify-between">

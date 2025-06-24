@@ -2,18 +2,20 @@
 
 import React, { FC, useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Ticket, Category, TicketHistory as TicketHistoryType } from "@/types/models";
+import { Ticket, Category, TicketHistory as TicketHistoryType, User } from "@/types/models";
 import { getTicket, updateTicket } from "@/service/tickets";
 import { getCategories } from "@/service/categories";
+import { getAllUsers } from "@/service/auth";
 import Button from "@/components/Button";
 import Input from "@/components/form/Input";
 import TextArea from "@/components/form/TextArea";
+import UserAssignment from "@/components/form/UserAssignment";
 import TicketHistory from "@/components/TicketHistory";
 import {
   ArrowLeft,
   Clock,
   Edit,
-  User,
+  Users,
   AlertCircle,
   CheckCircle,
   Save,
@@ -29,6 +31,7 @@ const TicketDetailPage: FC = () => {
   const { user } = useAuth();
   const [ticket, setTicket] = useState<(Ticket & { history?: TicketHistoryType[] }) | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const [isEditMode, setIsEditMode] = useState(false);
@@ -37,6 +40,7 @@ const TicketDetailPage: FC = () => {
     description: "",
     expiry_date: "",
     category_id: "",
+    assigned_user_ids: [],
   });
 
   const ticketId = params.id as string;
@@ -54,6 +58,7 @@ const TicketDetailPage: FC = () => {
         description: ticket.description || "",
         expiry_date: formatDateForInput(ticket.expiry_date),
         category_id: ticket.category_id,
+        assigned_user_ids: ticket.assigned_users.map((user) => user.id),
       });
     }
   }, [ticket]);
@@ -63,16 +68,19 @@ const TicketDetailPage: FC = () => {
       setIsLoading(true);
       setError("");
 
-      const [ticketResponse, categoriesResponse] = await Promise.all([
+      const [ticketResponse, categoriesResponse, usersResponse] = await Promise.all([
         getTicket(ticketId),
         getCategories(),
+        getAllUsers(),
       ]);
 
       const ticketData = ticketResponse.data;
       const categoriesData = categoriesResponse.data;
+      const usersData = usersResponse.data;
 
       setTicket(ticketData);
       setCategories(categoriesData);
+      setUsers(usersData);
     } catch (err: any) {
       console.error("Error loading ticket:", err);
       setError("Failed to load ticket details. Please try again.");
@@ -93,6 +101,7 @@ const TicketDetailPage: FC = () => {
           description: ticket.description || "",
           expiry_date: formatDateForInput(ticket.expiry_date),
           category_id: ticket.category_id,
+          assigned_user_ids: ticket.assigned_users.map((user) => user.id),
         });
       }
     }
@@ -148,6 +157,7 @@ const TicketDetailPage: FC = () => {
         icon: AlertCircle,
       };
     }
+    
     if (isExpiringSoon) {
       return {
         text: "Due Soon",
@@ -155,6 +165,7 @@ const TicketDetailPage: FC = () => {
         icon: AlertCircle,
       };
     }
+
     return {
       text: "On Track",
       color: "text-green-600 bg-green-50 border-green-200",
@@ -364,17 +375,15 @@ const TicketDetailPage: FC = () => {
                 </div>
 
                 <div className="border-t pt-6">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <User className="h-5 w-5 text-gray-400" />
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      Assigned Users
-                    </h2>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-gray-500 text-sm">
-                      User assignment feature coming soon...
-                    </p>
-                  </div>
+                  <UserAssignment
+                    label="Assigned Users"
+                    users={users}
+                    selectedUserIds={formData.assigned_user_ids}
+                    onChange={(userIds: string[]) =>
+                      setFormData({ ...formData, assigned_user_ids: userIds })
+                    }
+                    readonly={!isEditMode}
+                  />
                 </div>
 
                 <div className="border-t pt-6 mt-6">

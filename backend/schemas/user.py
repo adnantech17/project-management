@@ -17,3 +17,10 @@ class UserOut(UserBase):
     
     class Config:
         orm_mode = True 
+
+class UserAssigned(BaseModel):
+    id: uuid.UUID
+    username: str
+    
+    class Config:
+        from_attributes = True 

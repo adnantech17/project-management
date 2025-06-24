@@ -4,17 +4,20 @@ import Button from "@/components/Button";
 import Input from "@/components/form/Input";
 import TextArea from "@/components/form/TextArea";
 import Select from "@/components/form/Select";
+import UserAssignment from "@/components/form/UserAssignment";
 import TicketHistory from "@/components/TicketHistory";
 import { CreateTicketForm } from "@/types/forms";
 import {
   Category,
   Ticket,
   TicketHistory as TicketHistoryType,
+  User,
 } from "@/types/models";
 import { Clock, ExternalLink, Edit } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { formatDateForInput, formatDateTime } from "@/utils/date";
 import { getTicket } from "@/service/tickets";
+import { getAllUsers } from "@/service/auth";
 
 interface TicketModalProps {
   ticket?: (Ticket & { history?: TicketHistoryType[] }) | null;
@@ -43,17 +46,37 @@ const TicketModal: FC<TicketModalProps> = ({
     description: "",
     expiry_date: "",
     category_id: categories[0]?.id || "",
+    assigned_user_ids: [],
   });
   const [ticketWithHistory, setTicketWithHistory] = useState<
     (Ticket & { history?: TicketHistoryType[] }) | null
   >(null);
   const [isLoadingTicket, setIsLoadingTicket] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
   const isReadonly = mode === "view";
   const isEdit = mode === "edit";
   const isCreate = mode === "create";
 
-  // Load ticket data with history when modal opens in view/edit mode
+  useEffect(() => {
+    const loadUsers = async () => {
+      if (isOpen) {
+        setIsLoadingUsers(true);
+        try {
+          const response = await getAllUsers();
+          setUsers(response.data);
+        } catch (error) {
+          console.error("Failed to load users:", error);
+        } finally {
+          setIsLoadingUsers(false);
+        }
+      }
+    };
+
+    loadUsers();
+  }, [isOpen]);
+
   useEffect(() => {
     const loadTicketWithHistory = async () => {
       if (ticket && (mode === "view" || mode === "edit") && isOpen) {
@@ -84,6 +107,7 @@ const TicketModal: FC<TicketModalProps> = ({
         description: currentTicket.description || "",
         expiry_date: formatDateForInput(currentTicket.expiry_date),
         category_id: currentTicket.category_id,
+        assigned_user_ids: currentTicket.assigned_users?.map(u => u.id) || [],
       });
     } else if (isCreate) {
       setFormData({
@@ -91,6 +115,7 @@ const TicketModal: FC<TicketModalProps> = ({
         description: "",
         expiry_date: "",
         category_id: categories[0]?.id || "",
+        assigned_user_ids: [],
       });
     }
   }, [ticketWithHistory, ticket, mode, isEdit, isCreate, categories, isOpen]);
@@ -108,6 +133,7 @@ const TicketModal: FC<TicketModalProps> = ({
         description: "",
         expiry_date: "",
         category_id: categories[0]?.id || "",
+        assigned_user_ids: [],
       });
     }
 
@@ -137,6 +163,7 @@ const TicketModal: FC<TicketModalProps> = ({
         description: ticket.description || "",
         expiry_date: formatDateForInput(ticket.expiry_date),
         category_id: ticket.category_id,
+        assigned_user_ids: ticket.assigned_users?.map(u => u.id) || [],
       });
       onModeChange("view");
     }
@@ -175,16 +202,15 @@ const TicketModal: FC<TicketModalProps> = ({
         color: "text-red-600 bg-red-50 border-red-200",
       };
     }
+    
     if (isExpiringSoon) {
       return {
         text: "Due Soon",
         color: "text-orange-600 bg-orange-50 border-orange-200",
       };
     }
-    return {
-      text: "On Track",
-      color: "text-green-600 bg-green-50 border-green-200",
-    };
+
+    return null;
   };
 
   const getModalTitle = () => {
@@ -267,6 +293,16 @@ const TicketModal: FC<TicketModalProps> = ({
               readonly={isReadonly}
             />
           )}
+
+          <UserAssignment
+            label="Assigned Users"
+            users={users}
+            selectedUserIds={formData.assigned_user_ids}
+            onChange={(userIds: string[]) =>
+              setFormData({ ...formData, assigned_user_ids: userIds })
+            }
+            readonly={isReadonly}
+          />
 
           <Input
             label="Expiry Date"

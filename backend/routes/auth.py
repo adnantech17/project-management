@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, Request, status
 from sqlalchemy.orm import Session
+from typing import List
 from schemas import UserCreate, UserOut, UserLogin
 from schemas import Token
+from schemas.user import UserAssigned
 from database import SessionLocal
 from services.auth_service import create_user, authenticate_user, login_user
 from utils.jwt import decode_access_token
@@ -17,6 +19,20 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    
+    payload = decode_access_token(token)
+    username = payload.get("sub")
+    user = db.query(User).filter(User.username == username).first()
+    
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    
+    return user
 
 @router.post("/register", response_model=UserOut)
 def register(request: Request, user: UserCreate, db: Session = Depends(get_db)):
@@ -68,3 +84,15 @@ def get_me(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     
     return user 
+
+@router.get("/users", response_model=List[UserAssigned])
+def get_all_users(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get all users for assignment purposes"""
+    log_request(request, {})
+    
+    users = db.query(User).filter(User.is_active == True).all()
+    return users 

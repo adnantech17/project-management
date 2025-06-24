@@ -5,6 +5,7 @@ from datetime import datetime
 
 from .category import CategoryOut
 from .ticket_history import TicketHistoryOut
+from .user import UserAssigned
 
 class TicketBase(BaseModel):
     title: str
@@ -14,6 +15,7 @@ class TicketBase(BaseModel):
 
 class TicketCreate(TicketBase):
     category_id: uuid.UUID
+    assigned_user_ids: List[uuid.UUID] = []
 
 class TicketUpdate(BaseModel):
     title: Optional[str] = None
@@ -21,11 +23,13 @@ class TicketUpdate(BaseModel):
     expiry_date: Optional[datetime] = None
     position: Optional[int] = None
     category_id: Optional[uuid.UUID] = None
+    assigned_user_ids: Optional[List[uuid.UUID]] = None
 
 class TicketOut(TicketBase):
     id: uuid.UUID
     category_id: uuid.UUID
     user_id: uuid.UUID
+    assigned_users: List[UserAssigned] = []
     created_at: datetime
     updated_at: datetime
     

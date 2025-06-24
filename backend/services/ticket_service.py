@@ -7,6 +7,7 @@ import json
 from models.ticket import Ticket
 from models.category import Category
 from models.ticket_history import TicketHistory
+from models.user import User
 from schemas.ticket import TicketCreate, TicketUpdate
 
 class TicketService:
@@ -37,8 +38,17 @@ class TicketService:
             "description": ticket.description,
             "expiry_date": ticket.expiry_date.isoformat() if ticket.expiry_date else None,
             "position": ticket.position,
-            "category_id": str(ticket.category_id)
+            "category_id": str(ticket.category_id),
+            "assigned_users": [str(user.id) for user in ticket.assigned_users]
         }
+
+    def _assign_users_to_ticket(self, ticket: Ticket, user_ids: List[uuid.UUID]):
+        """Assign multiple users to a ticket"""
+        ticket.assigned_users.clear()
+        
+        if user_ids:
+            users = self.db.query(User).filter(User.id.in_(user_ids)).all()
+            ticket.assigned_users.extend(users)
 
     def create_ticket(self, ticket_data: TicketCreate, user_id: uuid.UUID) -> Optional[Ticket]:
         category = self.db.query(Category).filter(
@@ -61,6 +71,10 @@ class TicketService:
             user_id=user_id
         )
         self.db.add(db_ticket)
+        self.db.flush() 
+        
+        self._assign_users_to_ticket(db_ticket, ticket_data.assigned_user_ids)
+        
         self.db.commit()
         self.db.refresh(db_ticket)
         
@@ -139,9 +153,12 @@ class TicketService:
             if not category:
                 return None
 
-        update_data = ticket_data.model_dump(exclude_unset=True)
+        update_data = ticket_data.model_dump(exclude_unset=True, exclude={'assigned_user_ids'})
         for field, value in update_data.items():
             setattr(db_ticket, field, value)
+
+        if ticket_data.assigned_user_ids is not None:
+            self._assign_users_to_ticket(db_ticket, ticket_data.assigned_user_ids)
 
         self.db.commit()
         self.db.refresh(db_ticket)

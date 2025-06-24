@@ -1,3 +1,8 @@
+export interface User {
+  id: string;
+  username: string;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -17,6 +22,7 @@ export interface Ticket {
   position: number;
   category_id: string;
   user_id: string;
+  assigned_users: User[];
   created_at: string;
   updated_at: string;
   category?: Category;
