@@ -203,26 +203,6 @@ class TicketService:
         self.db.commit()
         return True
 
-    def reorder_tickets(self, user_id: uuid.UUID, ticket_positions: List[dict]) -> List[Ticket]:
-        """Update positions of multiple tickets"""
-        for item in ticket_positions:
-            ticket_id = item["id"]
-            new_position = item["position"]
-            new_category_id = item.get("category_id")
-            
-            db_ticket = self.get_ticket(ticket_id, user_id)
-            if db_ticket:
-                db_ticket.position = new_position
-                if new_category_id:
-                    category = self.db.query(Category).filter(
-                        and_(Category.id == new_category_id, Category.user_id == user_id)
-                    ).first()
-                    if category:
-                        db_ticket.category_id = new_category_id
-
-        self.db.commit()
-        return self.get_tickets(user_id)["items"]
-
     def drag_drop_ticket(self, ticket_id: uuid.UUID, target_category_id: uuid.UUID, target_position: int, user_id: uuid.UUID) -> Optional[Ticket]:
         db_ticket = self.get_ticket(ticket_id, user_id)
         if not db_ticket:

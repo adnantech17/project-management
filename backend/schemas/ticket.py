@@ -41,3 +41,10 @@ class TicketWithCategory(TicketOut):
 
 class TicketWithCategoryAndHistory(TicketWithCategory):
     history: List[TicketHistoryOut] = []
+
+class PaginatedTicketOut(BaseModel):
+    items: List[TicketOut]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

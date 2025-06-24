@@ -4,7 +4,6 @@ import React, { FC, useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { Calendar } from "lucide-react";
-import Button from "@/components/Button";
 import { Table } from "@/components/table";
 import { Ticket } from "@/types/models";
 import { getTicketsPaginated } from "@/service/tickets";
@@ -85,7 +84,10 @@ const AllTicketsPage: FC = () => {
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      const response = await getTicketsPaginated(currentPage, pageSize);
+      const response = await getTicketsPaginated({
+        page: currentPage,
+        pageSize,
+      });
       
       setTickets(response.data.items);
       setTotalItems(response.data.total);

@@ -111,17 +111,3 @@ def delete_category(
         raise HTTPException(status_code=404, detail="Category not found")
     
     return {"message": "Category deleted successfully"}
-
-@router.put("/reorder", response_model=List[CategoryOut])
-def reorder_categories(
-    request: Request,
-    category_positions: List[dict],
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    log_request(request, {"positions": category_positions})
-    
-    category_service = CategoryService(db)
-    updated_categories = category_service.reorder_categories(current_user.id, category_positions)
-    
-    return updated_categories

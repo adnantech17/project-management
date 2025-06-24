@@ -57,16 +57,3 @@ class CategoryService:
         self.db.delete(db_category)
         self.db.commit()
         return True
-
-    def reorder_categories(self, user_id: uuid.UUID, category_positions: List[dict]) -> List[Category]:
-        """Update positions of multiple categories"""
-        for item in category_positions:
-            category_id = item["id"]
-            new_position = item["position"]
-            
-            db_category = self.get_category(category_id, user_id)
-            if db_category:
-                db_category.position = new_position
-
-        self.db.commit()
-        return self.get_categories(user_id)

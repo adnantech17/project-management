@@ -4,7 +4,7 @@ from typing import List, Optional
 import uuid
 from pydantic import BaseModel
 
-from schemas.ticket import TicketCreate, TicketUpdate, TicketOut, TicketWithCategory, TicketWithCategoryAndHistory
+from schemas.ticket import TicketCreate, TicketUpdate, TicketOut, TicketWithCategory, TicketWithCategoryAndHistory, PaginatedTicketOut
 from schemas.ticket_history import TicketHistoryOut
 from database import SessionLocal
 from services.ticket_service import TicketService
@@ -57,7 +57,7 @@ def create_ticket(
     
     return created_ticket
 
-@router.get("/")
+@router.get("/", response_model=PaginatedTicketOut)
 def get_tickets(
     request: Request,
     category_id: Optional[uuid.UUID] = Query(None),
@@ -98,20 +98,6 @@ def drag_drop_ticket(
         raise HTTPException(status_code=404, detail="Ticket not found or invalid category")
     
     return updated_ticket
-
-@router.put("/reorder", response_model=List[TicketOut])
-def reorder_tickets(
-    request: Request,
-    ticket_positions: List[dict],
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    log_request(request, {"positions": ticket_positions})
-    
-    ticket_service = TicketService(db)
-    updated_tickets = ticket_service.reorder_tickets(current_user.id, ticket_positions)
-    
-    return updated_tickets
 
 @router.get("/{ticket_id}", response_model=TicketWithCategoryAndHistory)
 def get_ticket(

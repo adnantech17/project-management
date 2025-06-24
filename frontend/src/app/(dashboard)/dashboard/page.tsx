@@ -1,23 +1,26 @@
 "use client";
 
 import React, { useState, useEffect, FC } from "react";
-import { Plus, Filter } from "lucide-react";
+import { Filter, Plus } from "lucide-react";
 import { CreateTicketForm, CreateCategoryForm } from "@/types/forms";
-import { Category, Ticket } from "@/types/models";
+import { Category, Ticket, User } from "@/types/models";
 import TicketModal from "@/app/(dashboard)/dashboard/components/TicketModal";
 import CategoryModal from "@/app/(dashboard)/dashboard/components/CategoryModal";
 import DragDropBoard from "@/app/(dashboard)/dashboard/components/DragDropBoard";
+import FilterBar from "@/components/FilterBar";
 import Button from "@/components/Button";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { getCategories, createCategory } from "@/service/categories";
 import { getTickets, createTicket, updateTicket } from "@/service/tickets";
+import { getAllUsers } from "@/service/auth";
 
 const DashboardPage: FC = () => {
   const { user } = useAuth();
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
   const [ticketModalMode, setTicketModalMode] = useState<
     "create" | "edit" | "view"
@@ -28,6 +31,12 @@ const DashboardPage: FC = () => {
     useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  
+  const [allTickets, setAllTickets] = useState<Ticket[]>([]);
+
+  const [search, setSearch] = useState<string>("");
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [onlyMyIssues, setOnlyMyIssues] = useState<boolean>(false);
 
   useEffect(() => {
     if (user) {
@@ -35,24 +44,60 @@ const DashboardPage: FC = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (user) {
+      applyFilters();
+    }
+  }, [search, selectedUserIds, onlyMyIssues, allTickets, user]);
+
   const loadData = async () => {
     try {
       setIsLoading(true);
       setError("");
 
-      const [categoriesResponse, ticketsResponse] = await Promise.all([
+      const [categoriesResponse, ticketsResponse, usersResponse] = await Promise.all([
         getCategories(),
         getTickets(),
+        getAllUsers(),
       ]);
 
       setCategories(categoriesResponse.data);
-      setTickets(ticketsResponse.data.items);
+      setAllTickets(ticketsResponse.data.items);
+      setUsers(usersResponse.data);
     } catch (err: any) {
       console.error("Error loading data:", err);
       setError("Failed to load data. Please try again.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...allTickets];
+
+    if (search.trim()) {
+      const searchTerm = search.toLowerCase();
+      filtered = filtered.filter(ticket => 
+        ticket.title.toLowerCase().includes(searchTerm) ||
+        (ticket.description && ticket.description.toLowerCase().includes(searchTerm))
+      );
+    }
+
+    if (selectedUserIds.length > 0) {
+      filtered = filtered.filter(ticket => 
+        ticket.assigned_users && 
+        ticket.assigned_users.some(user => selectedUserIds.includes(user.id))
+      );
+    }
+
+    if (onlyMyIssues && user) {
+      filtered = filtered.filter(ticket => 
+        ticket.assigned_users && 
+        ticket.assigned_users.some(assignedUser => assignedUser.username === user.username)
+      );
+    }
+
+    setTickets(filtered);
   };
 
   const handleAddTicket = (categoryId: string = "") => {
@@ -86,7 +131,8 @@ const DashboardPage: FC = () => {
       };
 
       const response = await createTicket(ticketData);
-      setTickets([...tickets, response.data]);
+      const newTicket = response.data;
+      setAllTickets([...allTickets, newTicket]);
       setError("");
     } catch (err: any) {
       console.error("Error creating ticket:", err);
@@ -100,12 +146,13 @@ const DashboardPage: FC = () => {
   ) => {
     try {
       const response = await updateTicket(ticketId, data);
+      const updatedTicket = response.data;
       
-      setTickets(
-        tickets.map((ticket) =>
-          ticket.id === ticketId ? response.data : ticket
-        )
+      const updatedAllTickets = allTickets.map((ticket) =>
+        ticket.id === ticketId ? updatedTicket : ticket
       );
+
+      setAllTickets(updatedAllTickets);
       setError("");
     } catch (err: any) {
       console.error("Error updating ticket:", err);
@@ -125,7 +172,7 @@ const DashboardPage: FC = () => {
   };
 
   const handleTicketsUpdate = (updatedTickets: Ticket[]) => {
-    setTickets(updatedTickets);
+    setAllTickets(updatedTickets);
     setError("");
   };
 
@@ -153,7 +200,18 @@ const DashboardPage: FC = () => {
   return (
     <div className="flex flex-col h-full">
       <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
+          <FilterBar
+            search={search}
+            onSearchChange={setSearch}
+            selectedUserIds={selectedUserIds}
+            onUserIdsChange={setSelectedUserIds}
+            onlyMyIssues={onlyMyIssues}
+            onOnlyMyIssuesChange={setOnlyMyIssues}
+            users={users}
+            className="flex-1 mr-4"
+          />
+          
           <div className="flex items-center space-x-3">
             <Button
               onClick={() => setIsCategoryModalOpen(true)}
@@ -162,11 +220,6 @@ const DashboardPage: FC = () => {
             >
               <Plus size={16} />
               <span>Add Category</span>
-            </Button>
-
-            <Button variant="outline" className="flex items-center space-x-2">
-              <Filter size={16} />
-              <span>Filter & Sort</span>
             </Button>
 
             <Button
