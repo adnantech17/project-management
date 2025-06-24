@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, FC } from "react";
 import { Plus, X, Search } from "lucide-react";
 import { User } from "@/types/models";
-import { getInitials, getProfileColor } from "@/utils/profile";
+import ProfileAvatar from "@/components/ProfileAvatar";
 
 interface UserAssignmentProps {
   users: User[];
@@ -77,11 +77,11 @@ const UserAssignment: FC<UserAssignmentProps> = ({
             key={user.id}
             className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 group hover:bg-gray-100 transition-colors"
           >
-            <div
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium ${getProfileColor(user.username)}`}
-            >
-              {getInitials(user.username)}
-            </div>
+            <ProfileAvatar
+              username={user.username}
+              profile_picture={user.profile_picture}
+              size="sm"
+            />
             <span className="text-sm text-gray-700">{user.username}</span>
             {!readonly && (
               <button
@@ -135,11 +135,11 @@ const UserAssignment: FC<UserAssignmentProps> = ({
                         onClick={() => handleAddUser(user.id)}
                         className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-left"
                       >
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${getProfileColor(user.username)}`}
-                        >
-                          {getInitials(user.username)}
-                        </div>
+                        <ProfileAvatar
+                          username={user.username}
+                          profile_picture={user.profile_picture}
+                          size="md"
+                        />
                         <span className="text-sm text-gray-700">{user.username}</span>
                       </button>
                     ))

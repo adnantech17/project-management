@@ -1,5 +1,6 @@
 import api from "@/lib/axios";
 import { User } from "@/types/models";
+import { UserUpdateForm } from "@/types/forms";
 
 export async function login(username: string, password: string) {
   return api.post("/auth/login", { username, password });
@@ -10,7 +11,11 @@ export async function register(email: string, username: string, password: string
 }
 
 export async function getMe() {
-  return api.get<{ username: string; email: string }>("/auth/me");
+  return api.get<User>("/auth/me");
+}
+
+export async function updateUser(userData: UserUpdateForm) {
+  return api.put<User>("/auth/me", userData);
 }
 
 export async function logout() {

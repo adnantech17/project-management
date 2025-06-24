@@ -12,6 +12,12 @@ export interface RegisterFormInputs {
   password: string;
 }
 
+export interface UserUpdateForm {
+  first_name?: string;
+  last_name?: string;
+  profile_picture?: string;
+}
+
 export interface CreateTicketForm {
   title: string;
   description?: string;

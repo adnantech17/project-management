@@ -2,11 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode, FC } from "react";
 import { getMe } from "@/service/auth";
-
-interface User {
-  username: string;
-  email: string;
-}
+import { User } from "@/types/models";
 
 interface AuthContextType {
   user: User | null;

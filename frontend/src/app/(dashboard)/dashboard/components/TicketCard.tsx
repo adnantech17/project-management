@@ -1,7 +1,7 @@
 import React, { FC, useState, useRef, useEffect } from "react";
 import { Ticket } from "@/types/models";
 import { Calendar, Edit, Eye, MoreHorizontal, Users } from "lucide-react";
-import { getInitials, getProfileColor } from "@/utils/profile";
+import ProfileAvatar from "@/components/ProfileAvatar";
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -128,13 +128,13 @@ const TicketCard: FC<TicketCardProps> = ({
           <div className="flex items-center gap-1 flex-wrap">
             {ticket.assigned_users.slice(0, 4).map((user) => {
               return (
-                <div
+                <ProfileAvatar
                   key={user.id}
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium ${getProfileColor(user.username)}`}
-                  title={user.username}
-                >
-                  {getInitials(user.username)}
-                </div>
+                  username={user.username}
+                  profile_picture={user.profile_picture}
+                  size="sm"
+                  className="border border-white"
+                />
               );
             })}
             {ticket.assigned_users.length > 4 && (

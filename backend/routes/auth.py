@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from typing import List
 from schemas import UserCreate, UserOut, UserLogin
 from schemas import Token
-from schemas.user import UserAssigned
+from schemas.user import UserAssigned, UserUpdate
 from database import SessionLocal
 from services.auth_service import create_user, authenticate_user, login_user
+from services.user_service import UserService
 from utils.jwt import decode_access_token
 from models.user import User
 from utils.logger import log_request
@@ -83,7 +84,25 @@ def get_me(request: Request, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     
-    return user 
+    return user
+
+@router.put("/me", response_model=UserOut)
+def update_me(
+    request: Request,
+    user_update: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Update current user profile"""
+    log_request(request, user_update.model_dump(exclude_unset=True))
+    
+    user_service = UserService(db)
+    updated_user = user_service.update_user(current_user.id, user_update)
+    
+    if not updated_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return updated_user
 
 @router.get("/users", response_model=List[UserAssigned])
 def get_all_users(
