@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, update
 from typing import List, Optional, Dict, Any
 import uuid
@@ -90,7 +90,7 @@ class TicketService:
         return db_ticket
 
     def get_tickets(self, user_id: uuid.UUID, category_id: Optional[uuid.UUID] = None, page: int = 0, page_size: int = 0) -> dict:
-        query = self.db.query(Ticket).filter(Ticket.user_id == user_id)
+        query = self.db.query(Ticket).options(joinedload(Ticket.category)).filter(Ticket.user_id == user_id)
         
         if category_id:
             query = query.filter(Ticket.category_id == category_id)
@@ -123,7 +123,7 @@ class TicketService:
         }
 
     def get_ticket(self, ticket_id: uuid.UUID, user_id: uuid.UUID) -> Optional[Ticket]:
-        return self.db.query(Ticket).filter(
+        return self.db.query(Ticket).options(joinedload(Ticket.category)).filter(
             and_(Ticket.id == ticket_id, Ticket.user_id == user_id)
         ).first()
 
@@ -315,7 +315,6 @@ class TicketService:
 
     def get_all_user_activity_logs(self, user_id: uuid.UUID, page: int = 1, page_size: int = 50) -> List[TicketHistory]:
         """Get all activity logs for a user across all their tickets"""
-        from sqlalchemy.orm import joinedload
         
         user_ticket_ids = self.db.query(Ticket.id).filter(Ticket.user_id == user_id).subquery()
         
