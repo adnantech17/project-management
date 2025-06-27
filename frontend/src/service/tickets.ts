@@ -43,6 +43,11 @@ export async function dragDropTicket(ticketId: string, targetCategoryId: string,
   });
 }
 
-export async function getAllActivityLogs(page: number = 1, pageSize: number = 50) {
-  return api.get<TicketHistory[]>(`/tickets/history/all?page=${page}&page_size=${pageSize}`);
+export async function getAllActivityLogs(page: number = 1, pageSize: number = 50, onlyByMe: boolean = false) {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    page_size: pageSize.toString(),
+    only_by_me: onlyByMe.toString()
+  });
+  return api.get<TicketHistory[]>(`/tickets/history/all?${params}`);
 }

@@ -38,8 +38,8 @@ class TicketService:
             "description": ticket.description,
             "expiry_date": ticket.expiry_date.isoformat() if ticket.expiry_date else None,
             "position": ticket.position,
-            "category_id": str(ticket.category_id),
-            "assigned_users": [str(user.id) for user in ticket.assigned_users]
+            "category": ticket.category.name if ticket.category else None,
+            "assigned_users": [user.username for user in ticket.assigned_users]
         }
 
     def _assign_users_to_ticket(self, ticket: Ticket, user_ids: List[uuid.UUID]):
@@ -309,18 +309,23 @@ class TicketService:
             TicketHistory.ticket_id == ticket_id
         ).order_by(TicketHistory.created_at.desc()).all()
 
-    def get_all_activity_logs(self, page: int = 1, page_size: int = 50) -> List[TicketHistory]:
+    def get_all_activity_logs(self, page: int = 1, page_size: int = 50, filter_user_id: Optional[uuid.UUID] = None) -> List[TicketHistory]:
         """Get all activity logs for a user across all their tickets"""
         
         user_ticket_ids = self.db.query(Ticket.id).subquery()
         
         offset = (page - 1) * page_size
         
-        history_records = self.db.query(TicketHistory).filter(
+        query = self.db.query(TicketHistory).filter(
             TicketHistory.ticket_id.in_(
                 self.db.query(user_ticket_ids.c.id)
             )
-        ).order_by(TicketHistory.created_at.desc()).offset(offset).limit(page_size).all()
+        )
+        
+        if filter_user_id:
+            query = query.filter(TicketHistory.user_id == filter_user_id)
+        
+        history_records = query.order_by(TicketHistory.created_at.desc()).offset(offset).limit(page_size).all()
         
         for record in history_records:
             ticket = self.db.query(Ticket).filter(Ticket.id == record.ticket_id).first()

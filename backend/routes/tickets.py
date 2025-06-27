@@ -135,13 +135,14 @@ def get_all_activity_logs(
     request: Request,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
+    only_by_me: bool = Query(False, description="Show only activities by current user"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get all activity logs across all tickets"""
-    log_request(request, {"page": page, "page_size": page_size})
+    log_request(request, {"page": page, "page_size": page_size, "only_by_me": only_by_me})
     
     ticket_service = TicketService(db)
-    activity_logs = ticket_service.get_all_activity_logs(page, page_size)
+    activity_logs = ticket_service.get_all_activity_logs(page, page_size, current_user.id if only_by_me else None)
     
     return activity_logs

@@ -77,7 +77,24 @@ export const getChangedFields = (
   if (!oldValues || !newValues) return changes;
 
   Object.keys(newValues).forEach(key => {
-    if (oldValues[key] !== newValues[key]) {
+    let hasChanged = false;
+    
+    if (Array.isArray(oldValues[key]) && Array.isArray(newValues[key])) {
+      const oldArray = oldValues[key];
+      const newArray = newValues[key];
+      
+      if (oldArray.length !== newArray.length) {
+        hasChanged = true;
+      } else {
+        const sortedOld = [...oldArray].sort();
+        const sortedNew = [...newArray].sort();
+        hasChanged = JSON.stringify(sortedOld) !== JSON.stringify(sortedNew);
+      }
+    } else {
+      hasChanged = oldValues[key] !== newValues[key];
+    }
+    
+    if (hasChanged) {
       changes.push({
         field: key,
         oldValue: oldValues[key],
@@ -94,9 +111,13 @@ export const formatFieldValue = (value: any, field: string): string => {
   if (field === "expiry_date" && value) {
     return new Date(value).toLocaleDateString();
   }
+  if (Array.isArray(value)) {
+    if (value.length === 0) return "None";
+    return value.join(", ");
+  }
   return String(value);
 };
 
 export const formatFieldName = (field: string): string => {
-  return field.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+  return field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 };

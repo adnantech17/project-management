@@ -17,6 +17,7 @@ export default function ActivityLogPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [onlyByMe, setOnlyByMe] = useState(false);
 
   const fetchActivityLogs = async (
     pageNum: number = 1,
@@ -24,7 +25,7 @@ export default function ActivityLogPage() {
   ) => {
     try {
       setLoading(true);
-      const response = await getAllActivityLogs(pageNum, 50);
+      const response = await getAllActivityLogs(pageNum, 50, onlyByMe);
       const newLogs = response.data;
 
       if (append) {
@@ -45,12 +46,18 @@ export default function ActivityLogPage() {
 
   useEffect(() => {
     fetchActivityLogs();
-  }, []);
+  }, [onlyByMe]);
 
   const loadMore = () => {
     const nextPage = page + 1;
     setPage(nextPage);
     fetchActivityLogs(nextPage, true);
+  };
+
+  const handleFilterChange = (newOnlyByMe: boolean) => {
+    setOnlyByMe(newOnlyByMe);
+    setPage(1);
+    setActivityLogs([]);
   };
 
   const handleActivityClick = (activity: TicketHistory) => {
@@ -101,6 +108,17 @@ export default function ActivityLogPage() {
           <History className="h-6 w-6 text-gray-400" />
           <h1 className="text-2xl font-bold text-gray-900">Activity Log</h1>
         </div>
+        <button
+          type="button"
+          onClick={() => handleFilterChange(!onlyByMe)}
+          className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap cursor-pointer ${
+            onlyByMe
+              ? "bg-blue-100 text-blue-700 border border-blue-300"
+              : "bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100"
+          }`}
+        >
+          Only By Me
+        </button>
       </div>
 
       {activityLogs.length === 0 ? (
