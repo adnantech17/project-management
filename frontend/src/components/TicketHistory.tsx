@@ -46,7 +46,7 @@ const TicketHistory: FC<TicketHistoryProps> = ({
       </div>
       
       <div className={`space-y-4 ${showFullHistory ? 'bg-white rounded-lg border border-gray-200 overflow-hidden' : ''}`}>
-        <div className={`space-y-3 ${showFullHistory ? 'p-4 max-h-96 overflow-y-auto' : 'max-h-48 overflow-y-auto'}`}>
+        <div className={`space-y-3 ${showFullHistory ? 'p-4 max-h-96 overflow-y-auto' : 'h-full overflow-y-auto'}`}>
           {displayedHistory.map((item, index) => (
             <ActivityItem
               key={item.id}

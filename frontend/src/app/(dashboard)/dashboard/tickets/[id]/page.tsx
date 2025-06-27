@@ -224,6 +224,7 @@ const TicketDetailPage: FC = () => {
                       value={formData.title}
                       onChange={(e) => handleFormChange('title', e.target.value)}
                       readonly={!isEditMode}
+                      required={true}
                       className={
                         !isEditMode
                           ? "text-2xl font-bold border-none bg-transparent px-0 py-0"
@@ -254,6 +255,7 @@ const TicketDetailPage: FC = () => {
                     selectedCategoryId={formData.category_id}
                     onCategoryChange={(categoryId) => handleFormChange('category_id', categoryId)}
                     isEditMode={isEditMode}
+                    required={true}
                   />
 
                   <Input

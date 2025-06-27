@@ -12,6 +12,7 @@ interface UserAssignmentProps {
   label?: string;
   readonly?: boolean;
   className?: string;
+  required?: boolean;
 }
 
 const UserAssignment: FC<UserAssignmentProps> = ({
@@ -21,6 +22,7 @@ const UserAssignment: FC<UserAssignmentProps> = ({
   label,
   readonly = false,
   className = "",
+  required = false,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -63,11 +65,44 @@ const UserAssignment: FC<UserAssignmentProps> = ({
     onChange(selectedUserIds.filter(id => id !== userId));
   };
 
+  if (readonly) {
+    return (
+      <div className={`space-y-2 ${className}`}>
+        {label && (
+          <label className="block text-sm font-medium text-gray-700">
+            {label}
+            {required && <span className="text-red-500 ml-1">*</span>}
+          </label>
+        )}
+        <div className="space-y-2">
+          {selectedUsers.length === 0 ? (
+            <span className="text-gray-500 italic">No users assigned</span>
+          ) : (
+            selectedUsers.map(user => (
+              <div
+                key={user.id}
+                className="flex items-center gap-3"
+              >
+                <ProfileAvatar
+                  username={user.username}
+                  profile_picture={user.profile_picture}
+                  size="sm"
+                />
+                <span className="text-gray-900">{user.username}</span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`space-y-2 ${className}`}>
       {label && (
         <label className="block text-sm font-medium text-gray-700">
           {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
 

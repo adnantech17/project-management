@@ -2,6 +2,7 @@ import React, { FC, useState, useRef, useEffect } from "react";
 import { Ticket } from "@/types/models";
 import { Calendar, Edit, Eye, MoreHorizontal, Users } from "lucide-react";
 import ProfileAvatar from "@/components/ProfileAvatar";
+import MDEditor from "@uiw/react-md-editor";
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -21,9 +22,12 @@ const TicketCard: FC<TicketCardProps> = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const isExpiringSoon = ticket.expiry_date &&
-    new Date(ticket.expiry_date) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-  const isOverdue = ticket.expiry_date && new Date(ticket.expiry_date) < new Date();
+  const isExpiringSoon =
+    ticket.expiry_date &&
+    new Date(ticket.expiry_date) <
+      new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+  const isOverdue =
+    ticket.expiry_date && new Date(ticket.expiry_date) < new Date();
 
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("en-US", {
@@ -71,7 +75,8 @@ const TicketCard: FC<TicketCardProps> = ({
       className={`
         bg-white rounded-lg p-4 border border-gray-200 cursor-pointer 
         transition-all duration-200 ease-out
-        ${isDragging
+        ${
+          isDragging
             ? "opacity-50 scale-95 rotate-1 shadow-xl ring-2 ring-blue-400/50"
             : "hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98]"
         }
@@ -113,53 +118,53 @@ const TicketCard: FC<TicketCardProps> = ({
         </div>
       </div>
 
-      {ticket.description && (
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-          {ticket.description}
-        </p>
-      )}
-
-      {ticket.assigned_users && ticket.assigned_users.length > 0 && (
-        <div className="mb-3">
-          <div className="flex items-center space-x-1 text-xs text-gray-500 mb-2">
-            <Users size={12} />
-            <span>Assigned to:</span>
-          </div>
-          <div className="flex items-center gap-1 flex-wrap">
-            {ticket.assigned_users.slice(0, 4).map((user) => {
-              return (
-                <ProfileAvatar
-                  key={user.id}
-                  username={user.username}
-                  profile_picture={user.profile_picture}
-                  size="sm"
-                  className="border border-white"
-                />
-              );
-            })}
-            {ticket.assigned_users.length > 4 && (
-              <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-xs font-medium">
-                +{ticket.assigned_users.length - 4}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <div className="prose prose-sm max-w-none text-gray-900">
+        {ticket.description ? (
+          <MDEditor.Markdown
+            source={ticket.description}
+            style={{
+              backgroundColor: "transparent",
+              color: "inherit",
+            }}
+          />
+        ) : (
+          <span className="text-gray-500 italic">No description provided</span>
+        )}
+      </div>
 
       <div className="flex items-center justify-between">
         {ticket.expiry_date && (
-          <div className={`flex items-center space-x-1 text-xs ${
-            isOverdue ? "text-red-600" : isExpiringSoon ? "text-orange-600" : "text-gray-500"
-          }`}>
+          <div
+            className={`flex items-center space-x-1 text-xs ${
+              isOverdue
+                ? "text-red-600"
+                : isExpiringSoon
+                ? "text-orange-600"
+                : "text-gray-500"
+            }`}
+          >
             <Calendar size={12} />
             <span>{formatDate(ticket.expiry_date)}</span>
           </div>
         )}
 
-        <div className="w-6 h-6 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center ml-auto">
-          <span className="text-white text-xs font-medium">
-            {ticket.title.charAt(0).toUpperCase()}
-          </span>
+        <div className="flex items-center gap-1 flex-wrap">
+          {ticket.assigned_users.slice(0, 4).map((user) => {
+            return (
+              <ProfileAvatar
+                key={user.id}
+                username={user.username}
+                profile_picture={user.profile_picture}
+                size="sm"
+                className="border border-white"
+              />
+            );
+          })}
+          {ticket.assigned_users.length > 4 && (
+            <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 text-xs font-medium">
+              +{ticket.assigned_users.length - 4}
+            </div>
+          )}
         </div>
       </div>
     </div>

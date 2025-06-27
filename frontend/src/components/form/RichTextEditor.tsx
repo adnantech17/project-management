@@ -12,6 +12,7 @@ interface RichTextEditorProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  required?: boolean;
 }
 
 const RichTextEditor: FC<RichTextEditorProps> = ({
@@ -24,12 +25,38 @@ const RichTextEditor: FC<RichTextEditorProps> = ({
   onChange,
   placeholder,
   disabled = false,
+  required = false,
 }) => {
   const editorId = id || label?.toLowerCase().replace(/\s+/g, "-");
 
+  if (readonly) {
+    return (
+      <div className={`space-y-1 ${className}`}>
+        {label && (
+          <label className="block text-sm font-medium text-gray-700">
+            {label}
+            {required && <span className="text-red-500 ml-1">*</span>}
+          </label>
+        )}
+        <div className="prose prose-sm max-w-none text-gray-900">
+          {value ? (
+            <MDEditor.Markdown 
+              source={value} 
+              style={{ 
+                backgroundColor: 'transparent',
+                color: 'inherit'
+              }}
+            />
+          ) : (
+            <span className="text-gray-500 italic">No description provided</span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   const editorClasses = `
     ${error ? 'border-red-300' : 'border-gray-300'}
-    ${readonly ? 'opacity-60' : ''}
     ${className}
   `.trim();
 
@@ -41,19 +68,20 @@ const RichTextEditor: FC<RichTextEditorProps> = ({
           className="block text-sm font-medium text-gray-700"
         >
           {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
       <div className={`rounded-lg border ${editorClasses}`}>
         <MDEditor
           value={value}
           onChange={(val) => onChange?.(val || "")}
-          preview={readonly ? "preview" : "edit"}
-          hideToolbar={readonly || disabled}
+          preview="edit"
+          hideToolbar={disabled}
           visibleDragbar={false}
           data-color-mode="light"
           height={200}
           style={{
-            backgroundColor: readonly || disabled ? '#f9fafb' : 'white',
+            backgroundColor: disabled ? '#f9fafb' : 'white',
           }}
         />
       </div>

@@ -13,9 +13,7 @@ const TicketInfo: FC<TicketInfoProps> = ({
   updatedAt,
   className = "",
 }) => (
-  <div
-    className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${className}`}
-  >
+  <div className={`flex flex-col space-y-4 ${className}`}>
     <div className="bg-gray-50 rounded-lg p-4">
       <div className="flex items-center space-x-3">
         <div className="flex-shrink-0">

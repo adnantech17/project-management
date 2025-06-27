@@ -12,6 +12,7 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   options: SelectOption[];
   placeholder?: string;
   readonly?: boolean;
+  required?: boolean;
 }
 
 const Select: FC<SelectProps> = ({
@@ -22,19 +23,37 @@ const Select: FC<SelectProps> = ({
   options,
   placeholder,
   readonly = false,
+  value,
+  required = false,
   ...props
 }) => {
   const selectId = id || label?.toLowerCase().replace(/\s+/g, "-");
+
+  if (readonly) {
+    const selectedOption = options.find(option => option.value === value);
+    const displayValue = selectedOption ? selectedOption.label : "—";
+
+    return (
+      <div className={`space-y-1 ${className}`}>
+        {label && (
+          <label className="block text-sm font-medium text-gray-700">
+            {label}
+            {required && <span className="text-red-500 ml-1">*</span>}
+          </label>
+        )}
+        <div className="text-gray-900">
+          {displayValue}
+        </div>
+      </div>
+    );
+  }
 
   const baseClasses =
     "w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors";
   const errorClasses = error
     ? "border-red-300 focus:ring-red-500 focus:border-red-500"
     : "border-gray-300";
-  const readonlyClasses = readonly
-    ? "bg-gray-50 text-gray-700 cursor-not-allowed"
-    : "";
-  const selectClasses = `${baseClasses} ${errorClasses} ${readonlyClasses} ${className}`;
+  const selectClasses = `${baseClasses} ${errorClasses} ${className}`;
 
   return (
     <div className="space-y-1">
@@ -44,13 +63,14 @@ const Select: FC<SelectProps> = ({
           className="block text-sm font-medium text-gray-700"
         >
           {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
       <select
         id={selectId}
+        value={value}
+        required={required}
         className={selectClasses}
-        disabled={readonly}
-        tabIndex={readonly ? -1 : undefined}
         {...props}
       >
         {placeholder && (

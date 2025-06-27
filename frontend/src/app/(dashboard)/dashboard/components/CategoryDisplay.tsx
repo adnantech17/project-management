@@ -6,6 +6,7 @@ interface CategoryDisplayProps {
   selectedCategoryId: string;
   onCategoryChange?: (categoryId: string) => void;
   isEditMode: boolean;
+  required?: boolean;
 }
 
 const CategoryDisplay: FC<CategoryDisplayProps> = ({
@@ -14,6 +15,7 @@ const CategoryDisplay: FC<CategoryDisplayProps> = ({
   selectedCategoryId,
   onCategoryChange,
   isEditMode,
+  required = false,
 }) => {
   const selectedCategory =
     category || categories.find((cat) => cat.id === selectedCategoryId);
@@ -22,11 +24,13 @@ const CategoryDisplay: FC<CategoryDisplayProps> = ({
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">
         Category
+        {required && <span className="text-red-500 ml-1">*</span>}
       </label>
       {isEditMode ? (
         <select
           value={selectedCategoryId}
           onChange={(e) => onCategoryChange?.(e.target.value)}
+          required={required}
           className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
         >
           {categories.map((category) => (
@@ -36,12 +40,8 @@ const CategoryDisplay: FC<CategoryDisplayProps> = ({
           ))}
         </select>
       ) : (
-        <div className="flex items-center space-x-2 px-3 py-3 bg-gray-50 border border-gray-300 rounded-lg">
-          <div
-            className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: selectedCategory?.color || "#3B82F6" }}
-          />
-          <span className="text-gray-700">{selectedCategory?.name}</span>
+        <div className="text-gray-900">
+          {selectedCategory?.name || "—"}
         </div>
       )}
     </div>
