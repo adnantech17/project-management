@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional, List
+from pydantic import BaseModel, field_validator
+from typing import Optional, List, Union
 import uuid
 from datetime import datetime
 
@@ -13,6 +13,13 @@ class TicketBase(BaseModel):
     expiry_date: Optional[datetime] = None
     position: int = 0
 
+    @field_validator('expiry_date', mode='before')
+    @classmethod
+    def validate_expiry_date(cls, v):
+        if v == "" or v is None:
+            return None
+        return v
+
 class TicketCreate(TicketBase):
     category_id: uuid.UUID
     assigned_user_ids: List[uuid.UUID] = []
@@ -24,6 +31,13 @@ class TicketUpdate(BaseModel):
     position: Optional[int] = None
     category_id: Optional[uuid.UUID] = None
     assigned_user_ids: Optional[List[uuid.UUID]] = None
+
+    @field_validator('expiry_date', mode='before')
+    @classmethod
+    def validate_expiry_date(cls, v):
+        if v == "" or v is None:
+            return None
+        return v
 
 class TicketOut(TicketBase):
     id: uuid.UUID

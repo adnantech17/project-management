@@ -20,7 +20,7 @@ class Ticket(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     title = Column(String(255), nullable=False)
     description = Column(Text)
-    expiry_date = Column(DateTime(timezone=True))
+    expiry_date = Column(DateTime(timezone=True), nullable=True)
     position = Column(Integer, nullable=False, default=0)
     category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
