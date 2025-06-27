@@ -52,7 +52,7 @@ class TicketService:
 
     def create_ticket(self, ticket_data: TicketCreate, user_id: uuid.UUID) -> Optional[Ticket]:
         category = self.db.query(Category).filter(
-            and_(Category.id == ticket_data.category_id, Category.user_id == user_id)
+            and_(Category.id == ticket_data.category_id)
         ).first()
         
         if not category:
@@ -89,8 +89,8 @@ class TicketService:
         
         return db_ticket
 
-    def get_tickets(self, user_id: uuid.UUID, category_id: Optional[uuid.UUID] = None, page: int = 0, page_size: int = 0) -> dict:
-        query = self.db.query(Ticket).options(joinedload(Ticket.category)).filter(Ticket.user_id == user_id)
+    def get_tickets(self, category_id: Optional[uuid.UUID] = None, page: int = 0, page_size: int = 0) -> dict:
+        query = self.db.query(Ticket).options(joinedload(Ticket.category))
         
         if category_id:
             query = query.filter(Ticket.category_id == category_id)
@@ -122,24 +122,24 @@ class TicketService:
             "total_pages": total_pages
         }
 
-    def get_ticket(self, ticket_id: uuid.UUID, user_id: uuid.UUID) -> Optional[Ticket]:
+    def get_ticket(self, ticket_id: uuid.UUID) -> Optional[Ticket]:
         return self.db.query(Ticket).options(joinedload(Ticket.category)).filter(
-            and_(Ticket.id == ticket_id, Ticket.user_id == user_id)
+            and_(Ticket.id == ticket_id)
         ).first()
 
-    def get_ticket_with_history(self, ticket_id: uuid.UUID, user_id: uuid.UUID) -> Optional[Ticket]:
+    def get_ticket_with_history(self, ticket_id: uuid.UUID) -> Optional[Ticket]:
         """Get a ticket with its complete history"""
-        ticket = self.get_ticket(ticket_id, user_id)
+        ticket = self.get_ticket(ticket_id)
 
         if ticket:
-            history = self.get_ticket_history(ticket_id, user_id)
+            history = self.get_ticket_history(ticket_id)
 
             ticket.history = history
             
         return ticket
 
     def update_ticket(self, ticket_id: uuid.UUID, ticket_data: TicketUpdate, user_id: uuid.UUID) -> Optional[Ticket]:
-        db_ticket = self.get_ticket(ticket_id, user_id)
+        db_ticket = self.get_ticket(ticket_id)
         if not db_ticket:
             return None
 
@@ -148,7 +148,7 @@ class TicketService:
 
         if ticket_data.category_id:
             category = self.db.query(Category).filter(
-                and_(Category.id == ticket_data.category_id, Category.user_id == user_id)
+                and_(Category.id == ticket_data.category_id)
             ).first()
             if not category:
                 return None
@@ -209,7 +209,7 @@ class TicketService:
             return None
 
         target_category = self.db.query(Category).filter(
-            and_(Category.id == target_category_id, Category.user_id == user_id)
+            and_(Category.id == target_category_id)
         ).first()
         if not target_category:
             return None
@@ -231,7 +231,6 @@ class TicketService:
                             Ticket.category_id == target_category_id,
                             Ticket.position > old_position,
                             Ticket.position <= target_position,
-                            Ticket.user_id == user_id
                         )
                     )
                     .values(position=Ticket.position - 1)
@@ -244,7 +243,6 @@ class TicketService:
                             Ticket.category_id == target_category_id,
                             Ticket.position >= target_position,
                             Ticket.position < old_position,
-                            Ticket.user_id == user_id
                         )
                     )
                     .values(position=Ticket.position + 1)
@@ -256,7 +254,6 @@ class TicketService:
                     and_(
                         Ticket.category_id == old_category_id,
                         Ticket.position > old_position,
-                        Ticket.user_id == user_id
                     )
                 )
                 .values(position=Ticket.position - 1)
@@ -268,7 +265,6 @@ class TicketService:
                     and_(
                         Ticket.category_id == target_category_id,
                         Ticket.position >= target_position,
-                        Ticket.user_id == user_id
                     )
                 )
                 .values(position=Ticket.position + 1)
@@ -303,9 +299,9 @@ class TicketService:
         self.db.commit()
         return db_ticket
 
-    def get_ticket_history(self, ticket_id: uuid.UUID, user_id: uuid.UUID) -> List[TicketHistory]:
+    def get_ticket_history(self, ticket_id: uuid.UUID) -> List[TicketHistory]:
         """Get history records for a specific ticket"""
-        ticket = self.get_ticket(ticket_id, user_id)
+        ticket = self.get_ticket(ticket_id)
         if not ticket:
             return []
         
@@ -313,10 +309,10 @@ class TicketService:
             TicketHistory.ticket_id == ticket_id
         ).order_by(TicketHistory.created_at.desc()).all()
 
-    def get_all_user_activity_logs(self, user_id: uuid.UUID, page: int = 1, page_size: int = 50) -> List[TicketHistory]:
+    def get_all_activity_logs(self, page: int = 1, page_size: int = 50) -> List[TicketHistory]:
         """Get all activity logs for a user across all their tickets"""
         
-        user_ticket_ids = self.db.query(Ticket.id).filter(Ticket.user_id == user_id).subquery()
+        user_ticket_ids = self.db.query(Ticket.id).subquery()
         
         offset = (page - 1) * page_size
         

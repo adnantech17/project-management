@@ -56,7 +56,7 @@ def get_categories(
     log_request(request, {})
     
     category_service = CategoryService(db)
-    categories = category_service.get_categories(current_user.id)
+    categories = category_service.get_categories()
     
     return categories
 
@@ -70,7 +70,7 @@ def get_category(
     log_request(request, {"category_id": str(category_id)})
     
     category_service = CategoryService(db)
-    category = category_service.get_category(category_id, current_user.id)
+    category = category_service.get_category(category_id)
     
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
@@ -88,7 +88,7 @@ def update_category(
     log_request(request, {"category_id": str(category_id), **category_update.model_dump()})
     
     category_service = CategoryService(db)
-    updated_category = category_service.update_category(category_id, category_update, current_user.id)
+    updated_category = category_service.update_category(category_id, category_update)
     
     if not updated_category:
         raise HTTPException(status_code=404, detail="Category not found")
@@ -105,7 +105,7 @@ def delete_category(
     log_request(request, {"category_id": str(category_id)})
     
     category_service = CategoryService(db)
-    deleted = category_service.delete_category(category_id, current_user.id)
+    deleted = category_service.delete_category(category_id)
     
     if not deleted:
         raise HTTPException(status_code=404, detail="Category not found")

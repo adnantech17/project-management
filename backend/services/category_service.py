@@ -10,34 +10,29 @@ class CategoryService:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_category(self, category_data: CategoryCreate, user_id: uuid.UUID) -> Category:
-        max_position = self.db.query(Category).filter(
-            Category.user_id == user_id
-        ).count()
+    def create_category(self, category_data: CategoryCreate) -> Category:
+        max_position = self.db.query(Category).count()
         
         db_category = Category(
             name=category_data.name,
             color=category_data.color,
             position=max_position,
-            user_id=user_id
         )
         self.db.add(db_category)
         self.db.commit()
         self.db.refresh(db_category)
         return db_category
 
-    def get_categories(self, user_id: uuid.UUID) -> List[Category]:
-        return self.db.query(Category).filter(
-            Category.user_id == user_id
-        ).order_by(Category.position).all()
+    def get_categories(self) -> List[Category]:
+        return self.db.query(Category).order_by(Category.position).all()
 
-    def get_category(self, category_id: uuid.UUID, user_id: uuid.UUID) -> Optional[Category]:
+    def get_category(self, category_id: uuid.UUID) -> Optional[Category]:
         return self.db.query(Category).filter(
-            and_(Category.id == category_id, Category.user_id == user_id)
+            and_(Category.id == category_id)
         ).first()
 
-    def update_category(self, category_id: uuid.UUID, category_data: CategoryUpdate, user_id: uuid.UUID) -> Optional[Category]:
-        db_category = self.get_category(category_id, user_id)
+    def update_category(self, category_id: uuid.UUID, category_data: CategoryUpdate) -> Optional[Category]:
+        db_category = self.get_category(category_id)
         if not db_category:
             return None
 
@@ -49,8 +44,8 @@ class CategoryService:
         self.db.refresh(db_category)
         return db_category
 
-    def delete_category(self, category_id: uuid.UUID, user_id: uuid.UUID) -> bool:
-        db_category = self.get_category(category_id, user_id)
+    def delete_category(self, category_id: uuid.UUID) -> bool:
+        db_category = self.get_category(category_id)
         if not db_category:
             return False
 

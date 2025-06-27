@@ -73,7 +73,7 @@ def get_tickets(
     })
     
     ticket_service = TicketService(db)
-    result = ticket_service.get_tickets(current_user.id, category_id, page, page_size)
+    result = ticket_service.get_tickets(category_id, page, page_size)
     
     return result
 
@@ -112,9 +112,9 @@ def get_ticket(
     ticket_service = TicketService(db)
     
     if include_history:
-        ticket = ticket_service.get_ticket_with_history(ticket_id, current_user.id)
+        ticket = ticket_service.get_ticket_with_history(ticket_id)
     else:
-        ticket = ticket_service.get_ticket(ticket_id, current_user.id)
+        ticket = ticket_service.get_ticket(ticket_id)
         ticket.history = []
     
     if not ticket:
@@ -163,12 +163,11 @@ def get_all_activity_logs(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
 ):
-    """Get all activity logs for the current user across all tickets"""
+    """Get all activity logs across all tickets"""
     log_request(request, {"page": page, "page_size": page_size})
     
     ticket_service = TicketService(db)
-    activity_logs = ticket_service.get_all_user_activity_logs(current_user.id, page, page_size)
+    activity_logs = ticket_service.get_all_activity_logs(page, page_size)
     
     return activity_logs
