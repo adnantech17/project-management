@@ -1,12 +1,4 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
-import os
-from dotenv import load_dotenv
+# This file now imports from core for backward compatibility
+from core.database import SessionLocal, engine, Base, get_db
 
-load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base() 
+__all__ = ['SessionLocal', 'engine', 'Base', 'get_db'] 

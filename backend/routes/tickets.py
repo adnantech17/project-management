@@ -2,43 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Query, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import uuid
-from pydantic import BaseModel
 
-from schemas.ticket import TicketCreate, TicketUpdate, TicketOut, TicketWithCategory, TicketWithCategoryAndHistory, PaginatedTicketOut
+from schemas.ticket import TicketCreate, TicketUpdate, TicketOut, DragDropRequest, TicketWithCategoryAndHistory, PaginatedTicketOut
 from schemas.ticket_history import TicketHistoryOut
-from database import SessionLocal
+from core.database import get_db
+from core.auth import get_current_user
 from services.ticket_service import TicketService
-from utils.jwt import decode_access_token
 from models.user import User
 from utils.logger import log_request
 
 router = APIRouter(prefix="/tickets", tags=["tickets"])
-
-class DragDropRequest(BaseModel):
-    ticket_id: str
-    target_category_id: str
-    target_position: int
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
-    token = request.cookies.get("access_token")
-    if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    
-    payload = decode_access_token(token)
-    username = payload.get("sub")
-    user = db.query(User).filter(User.username == username).first()
-    
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-    
-    return user
 
 @router.post("/", response_model=TicketOut)
 def create_ticket(
@@ -163,6 +136,7 @@ def get_all_activity_logs(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """Get all activity logs across all tickets"""
     log_request(request, {"page": page, "page_size": page_size})

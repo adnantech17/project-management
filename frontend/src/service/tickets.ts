@@ -11,7 +11,7 @@ export interface GetTicketsParams {
 }
 
 export const getTickets = async (params: GetTicketsParams = {}) => {
-  return api.get('/tickets', { params });
+  return api.get('/tickets/', { params });
 };
 
 export const getTicketsPaginated = async (params: GetTicketsParams = {}) => {
@@ -24,19 +24,19 @@ export async function getTicket(ticketId: string, includeHistory: boolean = true
 }
 
 export async function createTicket(data: CreateTicketForm) {
-  return api.post<Ticket>("/tickets", data);
+  return api.post<Ticket>("/tickets/", data);
 }
 
 export async function updateTicket(ticketId: string, data: Partial<CreateTicketForm>) {
-  return api.put<Ticket>(`/tickets/${ticketId}`, data);
+  return api.put<Ticket>(`/tickets/${ticketId}/`, data);
 }
 
 export async function deleteTicket(ticketId: string) {
-  return api.delete(`/tickets/${ticketId}`);
+  return api.delete(`/tickets/${ticketId}/`);
 }
 
 export async function dragDropTicket(ticketId: string, targetCategoryId: string, targetPosition: number) {
-  return api.put<Ticket>("/tickets/drag-drop", {
+  return api.put<Ticket>("/tickets/drag-drop/", {
     ticket_id: ticketId,
     target_category_id: targetCategoryId,
     target_position: targetPosition

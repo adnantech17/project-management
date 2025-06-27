@@ -4,36 +4,14 @@ from typing import List
 from schemas import UserCreate, UserOut, UserLogin
 from schemas import Token
 from schemas.user import UserAssigned, UserUpdate
-from database import SessionLocal
-from services.auth_service import create_user, authenticate_user, login_user
+from core.database import get_db
+from core.auth import get_current_user, set_auth_cookies, clear_auth_cookies
+from services.auth_service import create_user, authenticate_user
 from services.user_service import UserService
-from utils.jwt import decode_access_token
 from models.user import User
 from utils.logger import log_request
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-def get_db():
-    db = SessionLocal()
-
-    try:
-        yield db
-    finally:
-        db.close()
-
-def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
-    token = request.cookies.get("access_token")
-    if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    
-    payload = decode_access_token(token)
-    username = payload.get("sub")
-    user = db.query(User).filter(User.username == username).first()
-    
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-    
-    return user
 
 @router.post("/register", response_model=UserOut)
 def register(request: Request, user: UserCreate, db: Session = Depends(get_db)):
@@ -55,36 +33,22 @@ def login(request: Request, response: Response, user: UserLogin, db: Session = D
     if not user_obj:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
     
-    access_token = login_user(user_obj)
-    response.set_cookie(key="access_token", value=access_token, httponly=True, samesite="None", secure=True)
+    set_auth_cookies(response, user_obj.username)
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": "set_in_cookie", "token_type": "bearer"}
 
 @router.post("/logout")
 def logout(request: Request, response: Response):
     log_request(request, {})
 
-    response.delete_cookie(key="access_token", samesite="None", secure=True)
+    clear_auth_cookies(response)
 
     return {"message": "Logged out"}
 
 @router.get("/me", response_model=UserOut)
-def get_me(request: Request, db: Session = Depends(get_db)):
+def get_me(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     log_request(request, {})
-
-    token = request.cookies.get("access_token")
-
-    if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    
-    payload = decode_access_token(token)
-    username = payload.get("sub")
-    user = db.query(User).filter(User.username == username).first()
-
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-    
-    return user
+    return current_user
 
 @router.put("/me", response_model=UserOut)
 def update_me(

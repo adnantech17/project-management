@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode, FC } 
 import { getMe } from "@/service/auth";
 import { User } from "@/types/models";
 import { clearAllDrafts } from "@/utils/draft";
+import { logout as logoutService } from "@/service/auth";
 
 interface AuthContextType {
   user: User | null;
@@ -65,10 +66,11 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     localStorage.removeItem("user");
     
     try {
+      await logoutService();
       clearAllDrafts();
     } catch (error) {
       console.error("Failed to clear drafts on logout:", error);

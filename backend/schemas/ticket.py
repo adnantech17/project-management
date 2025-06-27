@@ -62,3 +62,8 @@ class PaginatedTicketOut(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+class DragDropRequest(BaseModel):
+    ticket_id: str
+    target_category_id: str
+    target_position: int

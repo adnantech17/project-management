@@ -4,34 +4,13 @@ from typing import List
 import uuid
 
 from schemas.category import CategoryCreate, CategoryUpdate, CategoryOut, CategoryWithTickets
-from database import SessionLocal
+from core.database import get_db
+from core.auth import get_current_user
 from services.category_service import CategoryService
-from utils.jwt import decode_access_token
 from models.user import User
 from utils.logger import log_request
 
 router = APIRouter(prefix="/categories", tags=["categories"])
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
-    token = request.cookies.get("access_token")
-    if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    
-    payload = decode_access_token(token)
-    username = payload.get("sub")
-    user = db.query(User).filter(User.username == username).first()
-    
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-    
-    return user
 
 @router.post("/", response_model=CategoryOut)
 def create_category(

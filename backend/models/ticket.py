@@ -3,9 +3,8 @@ from sqlalchemy import Column, String, Text, Integer, DateTime, ForeignKey, Tabl
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from .user import Base
+from core.database import Base
 
-# Junction table for many-to-many relationship between tickets and users
 ticket_users = Table(
     'ticket_users',
     Base.metadata,
@@ -35,4 +34,3 @@ class Ticket(Base):
 
     def __repr__(self):
         return f"<Ticket(id={self.id}, title='{self.title}', category_id={self.category_id}, user_id={self.user_id})>" 
-    

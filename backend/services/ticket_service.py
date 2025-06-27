@@ -204,7 +204,7 @@ class TicketService:
         return True
 
     def drag_drop_ticket(self, ticket_id: uuid.UUID, target_category_id: uuid.UUID, target_position: int, user_id: uuid.UUID) -> Optional[Ticket]:
-        db_ticket = self.get_ticket(ticket_id, user_id)
+        db_ticket = self.get_ticket(ticket_id)
         if not db_ticket:
             return None
 

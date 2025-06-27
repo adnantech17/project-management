@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from models.user import User
 from utils.security import verify_password, get_password_hash
-from utils.jwt import create_access_token
 
 def get_user_by_username(db: Session, username: str):
     return db.query(User).filter(User.username == username).first()
@@ -29,8 +28,3 @@ def authenticate_user(db: Session, username: str, password: str):
         return None
     
     return user
-
-def login_user(user: User):
-    access_token = create_access_token({"sub": user.username})
-
-    return access_token 
