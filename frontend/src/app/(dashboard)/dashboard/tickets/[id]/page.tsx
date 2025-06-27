@@ -8,16 +8,16 @@ import { getCategories } from "@/service/categories";
 import { getAllUsers } from "@/service/auth";
 import Button from "@/components/Button";
 import Input from "@/components/form/Input";
-import TextArea from "@/components/form/TextArea";
+import RichTextEditor from "@/components/form/RichTextEditor";
 import UserAssignment from "@/components/form/UserAssignment";
 import TicketHistory from "@/components/TicketHistory";
+import StatusInfo from "@/app/(dashboard)/dashboard/components/StatusInfo";
+import TicketInfo from "@/app/(dashboard)/dashboard/components/TicketInfo";
+import CategoryDisplay from "@/app/(dashboard)/dashboard/components/CategoryDisplay";
+import { useDraft } from "@/context/DraftContext";
 import {
   ArrowLeft,
-  Clock,
   Edit,
-  Users,
-  AlertCircle,
-  CheckCircle,
   Save,
   X,
 } from "lucide-react";
@@ -45,6 +45,10 @@ const TicketDetailPage: FC = () => {
 
   const ticketId = params.id as string;
 
+  const { getDescription, updateDescription, clearDraft, isDraft } = useDraft();
+  const currentDescription = getDescription(ticketId || "", ticket?.description || "");
+  const showDraftLabel = ticketId && ticket ? isDraft(ticketId, ticket.description || "") : false;
+
   useEffect(() => {
     if (user && ticketId) {
       loadTicketData();
@@ -69,7 +73,7 @@ const TicketDetailPage: FC = () => {
       setError("");
 
       const [ticketResponse, categoriesResponse, usersResponse] = await Promise.all([
-        getTicket(ticketId),
+        getTicket(ticketId, true), // Get ticket with history
         getCategories(),
         getAllUsers(),
       ]);
@@ -112,72 +116,22 @@ const TicketDetailPage: FC = () => {
     if (!ticket) return;
 
     try {
-      const response = await updateTicket(ticket.id, formData);
+      const response = await updateTicket(ticket.id, {...formData, description: currentDescription});
       setTicket(response.data);
       setIsEditMode(false);
       setError("");
+      clearDraft(ticket.id);
     } catch (err: any) {
       console.error("Error updating ticket:", err);
       setError("Failed to update ticket. Please try again.");
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+  const handleFormChange = (field: keyof CreateTicketForm, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const isExpiringSoon =
-    ticket?.expiry_date &&
-    new Date(ticket.expiry_date) <
-      new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-
-  const isOverdue =
-    ticket?.expiry_date && new Date(ticket.expiry_date) < new Date();
-
-  const getStatusInfo = () => {
-    if (isOverdue) {
-      return {
-        text: "Overdue",
-        color: "text-red-600 bg-red-50 border-red-200",
-        icon: AlertCircle,
-      };
-    }
-    
-    if (isExpiringSoon) {
-      return {
-        text: "Due Soon",
-        color: "text-orange-600 bg-orange-50 border-orange-200",
-        icon: AlertCircle,
-      };
-    }
-
-    return {
-      text: "On Track",
-      color: "text-green-600 bg-green-50 border-green-200",
-      icon: CheckCircle,
-    };
-  };
-
-  const getSelectedCategory = () => {
-    return categories.find((cat) => cat.id === formData.category_id);
-  };
-
-
+  const selectedCategory = categories.find(cat => cat.id === formData.category_id);
 
   if (isLoading) {
     return (
@@ -202,10 +156,6 @@ const TicketDetailPage: FC = () => {
       </div>
     );
   }
-
-  const statusInfo = getStatusInfo();
-  const StatusIcon = statusInfo.icon;
-  const selectedCategory = getSelectedCategory();
 
   return (
     <div className="flex flex-col h-full">
@@ -258,15 +208,21 @@ const TicketDetailPage: FC = () => {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-6">
               <div className="space-y-6">
+                {showDraftLabel && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6">
+                    <div className="flex items-center">
+                      <span className="text-sm font-medium text-yellow-800">This form has unsaved changes!</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-start justify-between mb-6">
                   <div className="flex-1 mr-4">
                     <Input
                       label="Title"
                       type="text"
                       value={formData.title}
-                      onChange={(e) =>
-                        setFormData({ ...formData, title: e.target.value })
-                      }
+                      onChange={(e) => handleFormChange('title', e.target.value)}
                       readonly={!isEditMode}
                       className={
                         !isEditMode
@@ -275,123 +231,66 @@ const TicketDetailPage: FC = () => {
                       }
                     />
                   </div>
-                  <div
-                    className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${statusInfo.color}`}
-                  >
-                    <StatusIcon size={16} className="mr-2" />
-                    {statusInfo.text}
-                  </div>
+                  <StatusInfo expiryDate={ticket.expiry_date} />
                 </div>
 
-                <TextArea
+                <RichTextEditor
                   label="Description"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  rows={4}
+                  value={currentDescription}
+                  onChange={(value) => {
+                    setFormData(prev => ({ ...prev, description: value }));
+                    if (ticketId && ticket) {
+                      updateDescription(ticketId, value, ticket.description || "");
+                    }
+                  }}
                   placeholder="Enter task description..."
                   readonly={!isEditMode}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Category
-                    </label>
-                    {isEditMode ? (
-                      <select
-                        value={formData.category_id}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            category_id: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-                      >
-                        {categories.map((category) => (
-                          <option key={category.id} value={category.id}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <div className="flex items-center space-x-2 px-3 py-3 bg-gray-50 border border-gray-300 rounded-lg">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: selectedCategory?.color }}
-                        />
-                        <span className="text-gray-700">
-                          {selectedCategory?.name}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  <CategoryDisplay
+                    category={selectedCategory}
+                    categories={categories}
+                    selectedCategoryId={formData.category_id}
+                    onCategoryChange={(categoryId) => handleFormChange('category_id', categoryId)}
+                    isEditMode={isEditMode}
+                  />
 
                   <Input
                     label="Expiry Date"
                     type="date"
                     value={formData.expiry_date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, expiry_date: e.target.value })
-                    }
+                    onChange={(e) => handleFormChange('expiry_date', e.target.value)}
                     readonly={!isEditMode}
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6 border-t">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        <Clock className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">
-                          Created
-                        </p>
-                        <p className="text-sm text-gray-900 mt-1">
-                          {formatDateTime(ticket.created_at)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        <Clock className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-500">
-                          Last Updated
-                        </p>
-                        <p className="text-sm text-gray-900 mt-1">
-                          {formatDateTime(ticket.updated_at)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <TicketInfo
+                  createdAt={ticket.created_at}
+                  updatedAt={ticket.updated_at}
+                  className="pt-6 border-t"
+                />
 
                 <div className="border-t pt-6">
                   <UserAssignment
                     label="Assigned Users"
                     users={users}
                     selectedUserIds={formData.assigned_user_ids}
-                    onChange={(userIds: string[]) =>
-                      setFormData({ ...formData, assigned_user_ids: userIds })
+                    onChange={(userIds: string[]) => 
+                      handleFormChange('assigned_user_ids', userIds)
                     }
                     readonly={!isEditMode}
                   />
                 </div>
 
-                <div className="border-t pt-6 mt-6">
-                  <TicketHistory
-                    history={ticket.history || []}
-                    showFullHistory={true}
-                  />
-                </div>
+                {ticket.history && (
+                  <div className="border-t pt-6 mt-6">
+                    <TicketHistory
+                      history={ticket.history}
+                      showFullHistory={true}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>

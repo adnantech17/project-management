@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
+import { DraftProvider } from "@/context/DraftContext";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { isAuthenticated, loading, user } = useAuth();
@@ -32,26 +33,28 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900">
-              Welcome back, {user?.username}
-            </h1>
-            <div className="text-sm text-gray-500">
-              {new Date().toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
+    <DraftProvider>
+      <div className="min-h-screen bg-gray-50 flex">
+        <Sidebar />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <header className="bg-white border-b border-gray-200 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-semibold text-gray-900">
+                Welcome back, {user?.username}
+              </h1>
+              <div className="text-sm text-gray-500">
+                {new Date().toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </div>
             </div>
-          </div>
-        </header>
-        <main className="flex-1 overflow-hidden">{children}</main>
+          </header>
+          <main className="flex-1 overflow-hidden">{children}</main>
+        </div>
       </div>
-    </div>
+    </DraftProvider>
   );
 }

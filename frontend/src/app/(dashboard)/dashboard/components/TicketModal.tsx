@@ -1,11 +1,12 @@
-import React, { FC, FormEvent, useState, useEffect, MouseEvent } from "react";
+import React, { FC, FormEvent, useState, useEffect } from "react";
 import Modal from "@/components/Modal";
 import Button from "@/components/Button";
 import Input from "@/components/form/Input";
-import TextArea from "@/components/form/TextArea";
+import RichTextEditor from "@/components/form/RichTextEditor";
 import Select from "@/components/form/Select";
 import UserAssignment from "@/components/form/UserAssignment";
 import TicketHistory from "@/components/TicketHistory";
+import { useDraft } from "@/context/DraftContext";
 import { CreateTicketForm } from "@/types/forms";
 import {
   Category,
@@ -15,9 +16,12 @@ import {
 } from "@/types/models";
 import { Clock, ExternalLink, Edit } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { formatDateForInput, formatDateTime } from "@/utils/date";
+import { formatDateForInput } from "@/utils/date";
 import { getTicket } from "@/service/tickets";
 import { getAllUsers } from "@/service/auth";
+import StatusInfo from "./StatusInfo";
+
+import TicketInfo from "./TicketInfo";
 
 interface TicketModalProps {
   ticket?: (Ticket & { history?: TicketHistoryType[] }) | null;
@@ -48,59 +52,36 @@ const TicketModal: FC<TicketModalProps> = ({
     category_id: categories[0]?.id || "",
     assigned_user_ids: [],
   });
-  const [ticketWithHistory, setTicketWithHistory] = useState<
-    (Ticket & { history?: TicketHistoryType[] }) | null
-  >(null);
-  const [isLoadingTicket, setIsLoadingTicket] = useState(false);
+  const [ticketWithHistory, setTicketWithHistory] = useState<(Ticket & { history?: TicketHistoryType[] }) | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
   const isReadonly = mode === "view";
   const isEdit = mode === "edit";
   const isCreate = mode === "create";
 
-  useEffect(() => {
-    const loadUsers = async () => {
-      if (isOpen) {
-        setIsLoadingUsers(true);
-        try {
-          const response = await getAllUsers();
-          setUsers(response.data);
-        } catch (error) {
-          console.error("Failed to load users:", error);
-        } finally {
-          setIsLoadingUsers(false);
-        }
-      }
-    };
+  const { getDescription, updateDescription, clearDraft, isDraft } = useDraft();
+  const currentDescription = getDescription(ticket?.id || "", (ticketWithHistory || ticket)?.description || "");
+  const showDraftLabel = ticket?.id ? isDraft(ticket.id, (ticketWithHistory || ticket)?.description || "") : false;
 
-    loadUsers();
+  useEffect(() => {
+    if (isOpen) {
+      getAllUsers().then(response => setUsers(response.data)).catch(console.error);
+    }
   }, [isOpen]);
 
   useEffect(() => {
-    const loadTicketWithHistory = async () => {
-      if (ticket && (mode === "view" || mode === "edit") && isOpen) {
-        setIsLoadingTicket(true);
-        try {
-          const response = await getTicket(ticket.id, true);
-          setTicketWithHistory(response.data);
-        } catch (error) {
-          console.error("Failed to load ticket with history:", error);
-          setTicketWithHistory(ticket);
-        } finally {
-          setIsLoadingTicket(false);
-        }
-      } else {
-        setTicketWithHistory(null);
-      }
-    };
-
-    loadTicketWithHistory();
+    if (ticket && (mode === "view" || mode === "edit") && isOpen) {
+      getTicket(ticket.id, true)
+        .then(response => setTicketWithHistory(response.data))
+        .catch(() => setTicketWithHistory(ticket));
+    } else {
+      setTicketWithHistory(null);
+    }
   }, [ticket, mode, isOpen]);
 
   useEffect(() => {
     const currentTicket = ticketWithHistory || ticket;
-
+    
     if (currentTicket && (isEdit || mode === "view")) {
       setFormData({
         title: currentTicket.title,
@@ -118,300 +99,178 @@ const TicketModal: FC<TicketModalProps> = ({
         assigned_user_ids: [],
       });
     }
-  }, [ticketWithHistory, ticket, mode, isEdit, isCreate, categories, isOpen]);
+  }, [ticketWithHistory, ticket, mode, categories, isEdit, isCreate]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (isReadonly) return;
 
     if (isEdit && ticket && onUpdate) {
-      onUpdate(ticket.id, formData);
+      onUpdate(ticket.id, {...formData, description: currentDescription});
+      clearDraft(ticket.id);
     } else if (isCreate && onSubmit) {
       onSubmit(formData);
-      setFormData({
-        title: "",
-        description: "",
-        expiry_date: "",
-        category_id: categories[0]?.id || "",
-        assigned_user_ids: [],
-      });
     }
-
     onClose();
   };
 
-  const handleViewFullDetails = () => {
-    if (!ticket) {
-      return;
-    }
-
-    onClose();
-    router.push(`/dashboard/tickets/${ticket.id}`);
-  };
-
-  const handleEditMode = (e: MouseEvent<HTMLButtonElement>) => {
+  const handleViewFullDetails = (e: FormEvent) => {
     e.preventDefault();
-    if (onModeChange) {
-      onModeChange("edit");
+    if (ticket) {
+      onClose();
+      router.push(`/dashboard/tickets/${ticket.id}`);
     }
+  };
+
+  const handleEditMode = (e: FormEvent) => {
+    e.preventDefault();
+    onModeChange?.("edit");
   };
 
   const handleCancelEdit = () => {
-    if (ticket && onModeChange) {
-      setFormData({
-        title: ticket.title,
-        description: ticket.description || "",
-        expiry_date: formatDateForInput(ticket.expiry_date),
-        category_id: ticket.category_id,
-        assigned_user_ids: ticket.assigned_users?.map(u => u.id) || [],
-      });
-      onModeChange("view");
+    const currentTicket = ticketWithHistory || ticket;
+    if (currentTicket) {
+      setFormData(prev => ({ 
+        ...prev, 
+        description: currentTicket.description || "" 
+      }));
     }
+    onModeChange?.("view");
   };
 
-  const categoryOptions = categories.map((category) => ({
-    label: category.name,
-    value: category.id,
-  }));
-
-  const getSelectedCategoryName = () => {
-    const category = categories.find((cat) => cat.id === formData.category_id);
-    return category?.name || "";
+  const handleFormChange = (field: keyof CreateTicketForm, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const getSelectedCategoryColor = () => {
-    const category = categories.find((cat) => cat.id === formData.category_id);
-    return category?.color || "#3B82F6";
-  };
-
+  const categoryOptions = categories.map(cat => ({ label: cat.name, value: cat.id }));
+  const selectedCategory = categories.find(cat => cat.id === formData.category_id);
   const currentTicket = ticketWithHistory || ticket;
 
-  const isExpiringSoon =
-    currentTicket?.expiry_date &&
-    new Date(currentTicket.expiry_date) <
-      new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-
-  const isOverdue =
-    currentTicket?.expiry_date &&
-    new Date(currentTicket.expiry_date) < new Date();
-
-  const getStatusInfo = () => {
-    if (isOverdue) {
-      return {
-        text: "Overdue",
-        color: "text-red-600 bg-red-50 border-red-200",
-      };
-    }
-    
-    if (isExpiringSoon) {
-      return {
-        text: "Due Soon",
-        color: "text-orange-600 bg-orange-50 border-orange-200",
-      };
-    }
-
-    return null;
-  };
-
-  const getModalTitle = () => {
-    if (isCreate) return "Add New Task";
-    if (isEdit) return "Edit Task";
-    return "Task Details";
-  };
-
-  const statusInfo =
-    (mode === "view" || mode === "edit") && currentTicket
-      ? getStatusInfo()
-      : null;
-
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      className={mode === "view" || mode === "edit" ? "max-w-2xl" : "max-w-md"}
-    >
-      <div className="space-y-4">
+    <Modal isOpen={isOpen} onClose={onClose} width="max-w-6xl">
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{getModalTitle()}</h2>
-          {statusInfo && (
-            <div
-              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${statusInfo.color}`}
-            >
-              {statusInfo.text}
-            </div>
-          )}
+          <h2 className="text-lg font-semibold">
+            {isCreate ? "Add New Task" : isEdit ? "Edit Task" : "Task Details"}
+          </h2>
+          {currentTicket && <StatusInfo expiryDate={currentTicket.expiry_date} />}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Title *"
-            type="text"
-            required={!isReadonly}
-            value={formData.title}
-            onChange={(e) =>
-              setFormData({ ...formData, title: e.target.value })
-            }
-            placeholder="Enter task title..."
-            readonly={isReadonly}
-          />
+        {showDraftLabel && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <div className="flex items-center">
+              <span className="text-sm font-medium text-yellow-800">This form has unsaved changes!</span>
+            </div>
+          </div>
+        )}
 
-          <TextArea
-            label="Description"
-            value={formData.description}
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
-            rows={3}
-            placeholder="Enter task description..."
-            readonly={isReadonly}
-          />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <Input
+                label="Title *"
+                type="text"
+                required={!isReadonly}
+                value={formData.title}
+                onChange={e => handleFormChange('title', e.target.value)}
+                placeholder="Enter task title..."
+                readonly={isReadonly}
+              />
 
-          {isReadonly ? (
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Category
-              </label>
-              <div className="flex items-center space-x-2 px-3 py-3 bg-gray-50 border border-gray-300 rounded-lg">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: getSelectedCategoryColor() }}
+              <RichTextEditor
+                label="Description"
+                value={currentDescription}
+                onChange={(value) => {
+                  setFormData(prev => ({ ...prev, description: value }));
+                  if (ticket?.id) {
+                    updateDescription(ticket.id, value, (ticketWithHistory || ticket)?.description || "");
+                  }
+                }}
+                placeholder="Enter task description..."
+                readonly={isReadonly}
+              />
+
+              {isReadonly ? (
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">Category</label>
+                  <div className="flex items-center space-x-2 px-3 py-3 bg-gray-50 border border-gray-300 rounded-lg">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: selectedCategory?.color || "#3B82F6" }} />
+                    <span className="text-gray-700">{selectedCategory?.name || ""}</span>
+                  </div>
+                </div>
+              ) : (
+                <Select
+                  label="Category"
+                  value={formData.category_id}
+                  onChange={e => handleFormChange('category_id', e.target.value)}
+                  options={categoryOptions}
+                  placeholder="Select a category..."
                 />
-                <span className="text-gray-700">
-                  {getSelectedCategoryName()}
-                </span>
-              </div>
+              )}
+
+              <UserAssignment
+                label="Assigned Users"
+                users={users}
+                selectedUserIds={formData.assigned_user_ids}
+                onChange={userIds => handleFormChange('assigned_user_ids', userIds)}
+                readonly={isReadonly}
+              />
+
+              <Input
+                label="Expiry Date"
+                type="date"
+                value={formData.expiry_date}
+                onChange={e => handleFormChange('expiry_date', e.target.value)}
+                readonly={isReadonly}
+              />
             </div>
-          ) : (
-            <Select
-              label="Category"
-              value={formData.category_id}
-              onChange={(e) =>
-                setFormData({ ...formData, category_id: e.target.value })
-              }
-              options={categoryOptions}
-              placeholder="Select a category..."
-              readonly={isReadonly}
-            />
-          )}
 
-          <UserAssignment
-            label="Assigned Users"
-            users={users}
-            selectedUserIds={formData.assigned_user_ids}
-            onChange={(userIds: string[]) =>
-              setFormData({ ...formData, assigned_user_ids: userIds })
-            }
-            readonly={isReadonly}
-          />
-
-          <Input
-            label="Expiry Date"
-            type="date"
-            value={formData.expiry_date}
-            onChange={(e) =>
-              setFormData({ ...formData, expiry_date: e.target.value })
-            }
-            readonly={isReadonly}
-          />
-
-          {(mode === "view" || mode === "edit") && currentTicket && (
-            <div className="space-y-4 pt-4 border-t">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">
-                    <Clock className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-gray-500">Created</p>
-                    <p className="text-sm text-gray-900">
-                      {formatDateTime(currentTicket.created_at)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">
-                    <Clock className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-gray-500">
-                      Last Updated
-                    </p>
-                    <p className="text-sm text-gray-900">
-                      {formatDateTime(currentTicket.updated_at)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {(mode === "view" || mode === "edit") &&
-            ticketWithHistory?.history && (
-              <div className="pt-4 border-t">
-                {isLoadingTicket ? (
-                  <div className="flex items-center justify-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                    <span className="ml-2 text-sm text-gray-600">
-                      Loading history...
-                    </span>
-                  </div>
-                ) : (
-                  <TicketHistory
-                    history={ticketWithHistory.history}
-                    onViewFullHistory={handleViewFullDetails}
-                    className="pt-0"
+            <div className="space-y-6">
+              {(mode === "view" || mode === "edit") && currentTicket && (
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-gray-900 border-b border-gray-200 pb-2">Task Information</h3>
+                  <TicketInfo
+                    createdAt={currentTicket.created_at}
+                    updatedAt={currentTicket.updated_at}
                   />
-                )}
-              </div>
-            )}
+                </div>
+              )}
 
-          <div className="flex justify-end space-x-3 pt-4">
+              {ticketWithHistory?.history && (
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-gray-900 border-b border-gray-200 pb-2">Activity History</h3>
+                  <TicketHistory 
+                    history={ticketWithHistory.history} 
+                    onViewFullHistory={handleViewFullDetails} 
+                    className="pt-0" 
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
             {mode === "view" ? (
               <>
-                <Button
-                  type="button"
-                  onClick={handleEditMode}
-                  variant="primary"
-                  className="flex items-center space-x-2"
-                >
+                <Button type="button" onClick={handleEditMode} variant="primary" className="flex items-center space-x-2">
                   <Edit size={16} />
                   <span>Edit</span>
                 </Button>
-                <Button
-                  type="button"
-                  onClick={handleViewFullDetails}
-                  variant="outline"
-                  className="flex items-center space-x-2"
-                >
+                <Button type="button" onClick={handleViewFullDetails} variant="outline" className="flex items-center space-x-2">
                   <ExternalLink size={16} />
                   <span>Full Details</span>
                 </Button>
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Close
-                </Button>
+                <Button type="button" variant="outline" onClick={onClose}>Close</Button>
               </>
             ) : mode === "edit" ? (
               <>
-                <Button type="submit" variant="primary">
-                  Update Task
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCancelEdit}
-                >
-                  Cancel
-                </Button>
+                <Button type="submit" variant="primary">Update Task</Button>
+                <Button type="button" variant="outline" onClick={handleCancelEdit}>Cancel</Button>
               </>
             ) : (
               <>
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant="primary">
-                  Add Task
-                </Button>
+                <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+                <Button type="submit" variant="primary">Add Task</Button>
               </>
             )}
           </div>

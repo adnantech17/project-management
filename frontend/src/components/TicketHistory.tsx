@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { FC, FormEvent } from "react";
 import { TicketHistory as TicketHistoryType } from "@/types/models";
 import { History } from "lucide-react";
 import Button from "@/components/Button";
@@ -7,7 +7,7 @@ import ActivityItem from "@/components/activity/ActivityItem";
 interface TicketHistoryProps {
   history: TicketHistoryType[];
   showFullHistory?: boolean;
-  onViewFullHistory?: () => void;
+  onViewFullHistory?: (e: FormEvent) => void;
   maxItems?: number;
   className?: string;
 }

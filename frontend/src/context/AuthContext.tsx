@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, FC } from "react";
 import { getMe } from "@/service/auth";
 import { User } from "@/types/models";
+import { clearAllDrafts } from "@/utils/draft";
 
 interface AuthContextType {
   user: User | null;
@@ -66,6 +67,13 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem("user");
+    
+    try {
+      clearAllDrafts();
+    } catch (error) {
+      console.error("Failed to clear drafts on logout:", error);
+    }
+    
     setUser(null);
   };
 
