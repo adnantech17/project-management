@@ -30,3 +30,7 @@ class CategoryOut(CategoryBase):
 
 class CategoryWithTickets(CategoryOut):
     tickets: List["TicketOut"] = [] 
+
+class CategoryReorder(BaseModel):
+    id: uuid.UUID
+    position: int

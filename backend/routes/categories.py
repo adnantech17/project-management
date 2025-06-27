@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import uuid
 
-from schemas.category import CategoryCreate, CategoryUpdate, CategoryOut, CategoryWithTickets
+from schemas.category import CategoryCreate, CategoryUpdate, CategoryOut, CategoryWithTickets, CategoryReorder
 from core.database import get_db
 from core.auth import get_current_user
 from services.category_service import CategoryService
@@ -35,7 +35,7 @@ def get_categories(
     log_request(request, {})
     
     category_service = CategoryService(db)
-    categories = category_service.get_categories()
+    categories = category_service.get_categories(current_user.id)
     
     return categories
 
@@ -55,6 +55,23 @@ def get_category(
         raise HTTPException(status_code=404, detail="Category not found")
     
     return category
+
+@router.put("/reorder")
+def reorder_categories(
+    request: Request,
+    category_positions: List[CategoryReorder],
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    log_request(request, {"category_positions": category_positions})
+    
+    category_service = CategoryService(db)
+    success = category_service.reorder_categories(category_positions)
+    
+    if not success:
+        raise HTTPException(status_code=400, detail="Failed to reorder categories")
+    
+    return {"message": "Categories reordered successfully"}
 
 @router.put("/{category_id}", response_model=CategoryOut)
 def update_category(
@@ -84,9 +101,12 @@ def delete_category(
     log_request(request, {"category_id": str(category_id)})
     
     category_service = CategoryService(db)
-    deleted = category_service.delete_category(category_id)
+    result = category_service.delete_category(category_id)
     
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Category not found")
+    if not result["success"]:
+        if "not found" in result["error"]:
+            raise HTTPException(status_code=404, detail=result["error"])
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
     
     return {"message": "Category deleted successfully"}

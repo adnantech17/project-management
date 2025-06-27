@@ -1,16 +1,21 @@
 import React, { FC, useState, useEffect } from "react";
 import { Category, Ticket } from "@/types/models";
 import CategoryColumn from "./CategoryColumn";
-import { dragDropTicket, getTickets } from "@/service/tickets";
+import { dragDropTicket, getTickets, deleteTicket } from "@/service/tickets";
+import { reorderCategories } from "@/service/categories";
 
 interface DragDropBoardProps {
   categories: Category[];
   tickets: Ticket[];
   onTicketsUpdate: (tickets: Ticket[]) => void;
+  onCategoriesUpdate: (categories: Category[]) => void;
   onAddTicket: (categoryId: string) => void;
   onViewTicket: (ticket: Ticket) => void;
   onEditTicket: (ticket: Ticket) => void;
   onViewTicketDetails: (ticket: Ticket) => void;
+  onEditCategory: (category: Category) => void;
+  onDeleteCategory: (category: Category) => void;
+  onDeleteTicket: (ticket: Ticket) => void;
   onError: (error: string) => void;
 }
 
@@ -18,22 +23,30 @@ const DragDropBoard: FC<DragDropBoardProps> = ({
   categories,
   tickets,
   onTicketsUpdate,
+  onCategoriesUpdate,
   onAddTicket,
   onViewTicket,
   onEditTicket,
   onViewTicketDetails,
+  onEditCategory,
+  onDeleteCategory,
+  onDeleteTicket,
   onError,
 }) => {
   const [draggedTicketId, setDraggedTicketId] = useState<string>("");
+  const [draggedCategoryId, setDraggedCategoryId] = useState<string>("");
   const [isDropping, setIsDropping] = useState(false);
 
   useEffect(() => {
     const handleDragStart = (e: DragEvent) => {
       if (e.dataTransfer) {
-        const ticketId = e.dataTransfer.getData("text/plain");
-
-        if (ticketId) {
-          setDraggedTicketId(ticketId);
+        const data = e.dataTransfer.getData("text/plain");
+        
+        if (data.startsWith("category:")) {
+          const categoryId = data.replace("category:", "");
+          setDraggedCategoryId(categoryId);
+        } else if (data) {
+          setDraggedTicketId(data);
         }
       }
     };
@@ -41,6 +54,7 @@ const DragDropBoard: FC<DragDropBoardProps> = ({
     const handleDragEnd = () => {
       setTimeout(() => {
         setDraggedTicketId("");
+        setDraggedCategoryId("");
         setIsDropping(false);
       }, 100);
     };
@@ -88,6 +102,54 @@ const DragDropBoard: FC<DragDropBoardProps> = ({
     }
   };
 
+  const handleDeleteTicket = (ticketId: string) => {
+    const ticket = tickets.find(t => t.id === ticketId);
+    
+    if (ticket) {
+      onDeleteTicket(ticket);
+    }
+  };
+
+  const handleCategoryDrop = async (e: React.DragEvent, targetCategoryIndex: number) => {
+    e.preventDefault();
+    
+    if (!draggedCategoryId || isDropping) return;
+    
+    setIsDropping(true);
+    
+    try {
+      const newCategories = [...categories];
+      const draggedIndex = newCategories.findIndex(cat => cat.id === draggedCategoryId);
+      
+      if (draggedIndex === -1 || draggedIndex === targetCategoryIndex) {
+        setIsDropping(false);
+        return;
+      }
+      
+      const [draggedCategory] = newCategories.splice(draggedIndex, 1);
+      newCategories.splice(targetCategoryIndex, 0, draggedCategory);
+      
+      const categoryPositions = newCategories.map((category, index) => ({
+        id: category.id,
+        position: index
+      }));
+      
+      await reorderCategories(categoryPositions);
+      
+      const updatedCategories = newCategories.map((category, index) => ({
+        ...category,
+        position: index
+      }));
+      
+      onCategoriesUpdate(updatedCategories);
+    } catch (err: any) {
+      console.error("Error reordering categories:", err);
+      onError("Failed to reorder categories. Please try again.");
+    } finally {
+      setIsDropping(false);
+    }
+  };
+
   const getTicketsForCategory = (categoryId: string): Ticket[] => {
     return tickets
       .filter((ticket) => ticket.category_id === categoryId)
@@ -95,8 +157,25 @@ const DragDropBoard: FC<DragDropBoardProps> = ({
   };
 
   return (
-    <div className="flex space-x-6 overflow-x-auto pb-6">
-      {categories.map((category) => (
+    <div 
+      className="flex space-x-6 overflow-x-auto pb-6"
+      onDragOver={(e) => {
+        if (draggedCategoryId) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+        }
+      }}
+      onDrop={(e) => {
+        if (draggedCategoryId) {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const categoryWidth = 320 + 24; // 320px width + 24px gap
+          const targetIndex = Math.floor(x / categoryWidth);
+          handleCategoryDrop(e, Math.min(targetIndex, categories.length - 1));
+        }
+      }}
+    >
+      {categories.map((category, index) => (
         <CategoryColumn
           key={category.id}
           category={category}
@@ -106,7 +185,12 @@ const DragDropBoard: FC<DragDropBoardProps> = ({
           onEditTicket={onEditTicket}
           onViewTicketDetails={onViewTicketDetails}
           onDropTicket={(ticketId, position) => handleDropTicket(category.id, ticketId, position)}
+          onDeleteTicket={handleDeleteTicket}
+          onEditCategory={onEditCategory}
+          onDeleteCategory={onDeleteCategory}
           draggedTicketId={draggedTicketId}
+          draggedCategoryId={draggedCategoryId}
+          isDragging={draggedCategoryId === category.id}
         />
       ))}
     </div>

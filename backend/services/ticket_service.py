@@ -184,7 +184,8 @@ class TicketService:
         return db_ticket
 
     def delete_ticket(self, ticket_id: uuid.UUID, user_id: uuid.UUID) -> bool:
-        db_ticket = self.get_ticket(ticket_id, user_id)
+        db_ticket = self.get_ticket(ticket_id)
+        
         if not db_ticket:
             return False
 

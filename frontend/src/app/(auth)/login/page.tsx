@@ -72,15 +72,17 @@ export default function LoginPage() {
 
             <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
               <Input
-                label="Username*"
+                label="Username"
                 type="text"
                 placeholder="Username"
                 error={errors.username?.message}
+                required={true}
                 {...register("username", { required: "Username is required" })}
               />
 
               <PasswordInput
-                label="Password*"
+                label="Password"
+                required={true}
                 placeholder="Enter your password"
                 error={errors.password?.message}
                 {...register("password", { required: "Password is required" })}

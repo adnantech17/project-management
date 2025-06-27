@@ -40,7 +40,7 @@ export default function RegisterPage() {
             </p>
             <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
               <Input
-                label="First Name*"
+                label="First Name"
                 type="text"
                 placeholder="First Name"
                 error={errors.firstName?.message}
@@ -50,7 +50,8 @@ export default function RegisterPage() {
               />
 
               <Input
-                label="Last Name*"
+                label="Last Name"
+                required={true}
                 type="text"
                 placeholder="Last Name"
                 error={errors.lastName?.message}
@@ -58,7 +59,8 @@ export default function RegisterPage() {
               />
 
               <Input
-                label="Email*"
+                label="Email"
+                required={true}
                 type="email"
                 placeholder="info@gmail.com"
                 error={errors.email?.message}
@@ -66,7 +68,8 @@ export default function RegisterPage() {
               />
 
               <Input
-                label="Username*"
+                label="Username"
+                required={true}
                 type="text"
                 placeholder="Username"
                 error={errors.username?.message}
@@ -74,7 +77,8 @@ export default function RegisterPage() {
               />
 
               <PasswordInput
-                label="Password*"
+                label="Password"
+                required={true}
                 placeholder="Password"
                 error={errors.password?.message}
                 {...register("password", { required: "Password is required" })}

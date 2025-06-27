@@ -1,5 +1,5 @@
-import React, { FC, Fragment, useState } from "react";
-import { Plus, MoreHorizontal } from "lucide-react";
+import React, { FC, Fragment, useState, useRef, useEffect } from "react";
+import { Plus, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import TicketCard from "@/app/(dashboard)/dashboard/components/TicketCard";
 import Button from "@/components/Button";
 import { Category, Ticket } from "@/types/models";
@@ -12,7 +12,12 @@ interface CategoryColumnProps {
   onEditTicket: (ticket: Ticket) => void;
   onViewTicketDetails: (ticket: Ticket) => void;
   onDropTicket: (ticketId: string, position?: number) => void;
+  onDeleteTicket: (ticketId: string) => void;
+  onEditCategory: (category: Category) => void;
+  onDeleteCategory: (category: Category) => void;
   draggedTicketId?: string;
+  draggedCategoryId?: string;
+  isDragging?: boolean;
 }
 
 const CategoryColumn: FC<CategoryColumnProps> = ({
@@ -23,9 +28,16 @@ const CategoryColumn: FC<CategoryColumnProps> = ({
   onEditTicket,
   onViewTicketDetails,
   onDropTicket,
+  onDeleteTicket,
+  onEditCategory,
+  onDeleteCategory,
   draggedTicketId,
+  draggedCategoryId,
+  isDragging = false,
 }) => {
   const [dragOverIndex, setDragOverIndex] = useState<number>(-1);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleTicketDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
@@ -102,16 +114,53 @@ const CategoryColumn: FC<CategoryColumnProps> = ({
 
   const showDropIndicator = (index: number) => dragOverIndex === index;
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleCategoryDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.setData("text/plain", `category:${category.id}`);
+    e.dataTransfer.effectAllowed = "move";
+    setShowDropdown(false);
+  };
+
+  const handleDropdownClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDropdown(!showDropdown);
+  };
+
+  const handleMenuAction = (action: () => void) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDropdown(false);
+    action();
+  };
+
   return (
     <div
       className={`
         bg-gray-50 rounded-lg p-4 min-w-80 min-h-[80vh]
         transition-all duration-200 ease-out
         ${dragOverIndex !== -1 ? "bg-blue-50/50 ring-2 ring-blue-300/50" : ""}
+        ${
+          isDragging
+            ? "opacity-50 scale-95 rotate-1 shadow-xl ring-2 ring-blue-400/50"
+            : ""
+        }
       `}
       onDragOver={handleColumnDragOver}
       onDragLeave={handleColumnDragLeave}
       onDrop={handleColumnDrop}
+      draggable
+      onDragStart={handleCategoryDragStart}
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
@@ -124,9 +173,33 @@ const CategoryColumn: FC<CategoryColumnProps> = ({
             {tickets.length}
           </span>
         </div>
-        <button className="text-gray-400 hover:text-gray-600 p-1 rounded transition-colors">
-          <MoreHorizontal size={16} />
-        </button>
+        <div className="relative" ref={dropdownRef}>
+          <button 
+            className="text-gray-400 hover:text-gray-600 p-1 rounded transition-colors"
+            onClick={handleDropdownClick}
+          >
+            <MoreHorizontal size={16} />
+          </button>
+
+          {showDropdown && (
+            <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-36 overflow-hidden">
+              <button
+                onClick={handleMenuAction(() => onEditCategory(category))}
+                className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+              >
+                <Edit size={14} />
+                <span>Edit</span>
+              </button>
+              <button
+                onClick={handleMenuAction(() => onDeleteCategory(category))}
+                className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+              >
+                <Trash2 size={14} />
+                <span>Delete</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2 relative">
@@ -146,6 +219,7 @@ const CategoryColumn: FC<CategoryColumnProps> = ({
                 onView={onViewTicket}
                 onEdit={onEditTicket}
                 onViewDetails={onViewTicketDetails}
+                onDelete={onDeleteTicket}
                 isDragging={draggedTicketId === ticket.id}
               />
             </div>

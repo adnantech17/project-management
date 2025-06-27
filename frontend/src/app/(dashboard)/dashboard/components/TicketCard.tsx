@@ -1,6 +1,6 @@
 import React, { FC, useState, useRef, useEffect } from "react";
 import { Ticket } from "@/types/models";
-import { Calendar, Edit, Eye, MoreHorizontal, Users } from "lucide-react";
+import { Calendar, Edit, Eye, MoreHorizontal, Trash2 } from "lucide-react";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import MDEditor from "@uiw/react-md-editor";
 
@@ -9,6 +9,7 @@ interface TicketCardProps {
   onView: (ticket: Ticket) => void;
   onEdit: (ticket: Ticket) => void;
   onViewDetails: (ticket: Ticket) => void;
+  onDelete: (ticketId: string) => void;
   isDragging?: boolean;
 }
 
@@ -17,6 +18,7 @@ const TicketCard: FC<TicketCardProps> = ({
   onView,
   onEdit,
   onViewDetails,
+  onDelete,
   isDragging = false,
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -112,6 +114,13 @@ const TicketCard: FC<TicketCardProps> = ({
               >
                 <Eye size={14} />
                 <span>View Details</span>
+              </button>
+              <button
+                onClick={handleMenuAction(() => onDelete(ticket.id))}
+                className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+              >
+                <Trash2 size={14} />
+                <span>Delete</span>
               </button>
             </div>
           )}

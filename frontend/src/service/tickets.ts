@@ -32,7 +32,7 @@ export async function updateTicket(ticketId: string, data: Partial<CreateTicketF
 }
 
 export async function deleteTicket(ticketId: string) {
-  return api.delete(`/tickets/${ticketId}/`);
+  return api.delete(`/tickets/${ticketId}`);
 }
 
 export async function dragDropTicket(ticketId: string, targetCategoryId: string, targetPosition: number) {

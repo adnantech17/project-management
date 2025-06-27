@@ -21,3 +21,7 @@ export async function updateCategory(categoryId: string, data: Partial<CreateCat
 export async function deleteCategory(categoryId: string) {
   return api.delete(`/categories/${categoryId}/`);
 }
+
+export async function reorderCategories(categoryPositions: Array<{id: string, position: number}>) {
+  return api.put("/categories/reorder/", categoryPositions);
+}

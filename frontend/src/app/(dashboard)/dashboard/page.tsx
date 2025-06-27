@@ -11,9 +11,10 @@ import FilterBar from "@/components/FilterBar";
 import Button from "@/components/Button";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { getCategories, createCategory } from "@/service/categories";
-import { getTickets, createTicket, updateTicket } from "@/service/tickets";
+import { getCategories, createCategory, updateCategory, deleteCategory } from "@/service/categories";
+import { getTickets, createTicket, updateTicket, deleteTicket } from "@/service/tickets";
 import { getAllUsers } from "@/service/auth";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const DashboardPage: FC = () => {
   const { user } = useAuth();
@@ -26,11 +27,26 @@ const DashboardPage: FC = () => {
     "create" | "edit" | "view"
   >("create");
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [categoryModalMode, setCategoryModalMode] = useState<"create" | "edit">("create");
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [selectedCategoryForTicket, setSelectedCategoryForTicket] =
     useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    isLoading: boolean;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    isLoading: false,
+  });
   
   const [allTickets, setAllTickets] = useState<Ticket[]>([]);
 
@@ -171,6 +187,90 @@ const DashboardPage: FC = () => {
     }
   };
 
+  const handleUpdateCategory = async (categoryId: string, data: CreateCategoryForm) => {
+    try {
+      const response = await updateCategory(categoryId, data);
+      const updatedCategories = categories.map((category) =>
+        category.id === categoryId ? response.data : category
+      );
+      setCategories(updatedCategories);
+      setError("");
+    } catch (err: any) {
+      console.error("Error updating category:", err);
+      setError("Failed to update category. Please try again.");
+    }
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setSelectedCategory(category);
+    setCategoryModalMode("edit");
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleDeleteCategory = (category: Category) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Delete Category",
+      message: `Are you sure you want to delete "${category.name}"? This action cannot be undone.`,
+      onConfirm: () => confirmDeleteCategory(category.id),
+      isLoading: false,
+    });
+  };
+
+  const confirmDeleteCategory = async (categoryId: string) => {
+    setConfirmDialog(prev => ({ ...prev, isLoading: true }));
+    
+    try {
+      await deleteCategory(categoryId);
+      const updatedCategories = categories.filter((category) => category.id !== categoryId);
+      setCategories(updatedCategories);
+      setConfirmDialog(prev => ({ ...prev, isOpen: false, isLoading: false }));
+      setError("");
+    } catch (err: any) {
+      console.error("Error deleting category:", err);
+      setConfirmDialog(prev => ({ ...prev, isLoading: false }));
+      
+      if (err.response?.status === 400) {
+        setError(err.response.data.detail || "Cannot delete category with existing tickets.");
+      } else {
+        setError("Failed to delete category. Please try again.");
+      }
+    }
+  };
+
+  const handleCategoriesUpdate = (updatedCategories: Category[]) => {
+    setCategories(updatedCategories);
+    setError("");
+  };
+
+  const handleDeleteTicket = (ticket: Ticket) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Delete Ticket",
+      message: `Are you sure you want to delete "${ticket.title}"? This action cannot be undone.`,
+      onConfirm: () => confirmDeleteTicket(ticket.id),
+      isLoading: false,
+    });
+  };
+
+  const confirmDeleteTicket = async (ticketId: string) => {
+    setConfirmDialog(prev => ({ ...prev, isLoading: true }));
+    
+    try {
+      await deleteTicket(ticketId);
+      const response = await getTickets();
+      
+      handleTicketsUpdate(response.data.items);
+      setConfirmDialog(prev => ({ ...prev, isOpen: false, isLoading: false }));
+      setError("");
+    } catch (err: any) {
+      console.error("Error deleting ticket:", err);
+      
+      setConfirmDialog(prev => ({ ...prev, isLoading: false }));
+      setError("Failed to delete ticket. Please try again.");
+    }
+  };
+
   const handleTicketsUpdate = (updatedTickets: Ticket[]) => {
     setAllTickets(updatedTickets);
     setError("");
@@ -184,6 +284,18 @@ const DashboardPage: FC = () => {
     setIsTicketModalOpen(false);
     setSelectedTicket(null);
     setSelectedCategoryForTicket("");
+  };
+
+  const handleCloseCategoryModal = () => {
+    setIsCategoryModalOpen(false);
+    setSelectedCategory(null);
+    setCategoryModalMode("create");
+  };
+
+  const handleAddCategory = () => {
+    setSelectedCategory(null);
+    setCategoryModalMode("create");
+    setIsCategoryModalOpen(true);
   };
 
   if (isLoading) {
@@ -214,7 +326,7 @@ const DashboardPage: FC = () => {
           
           <div className="flex items-center space-x-3">
             <Button
-              onClick={() => setIsCategoryModalOpen(true)}
+              onClick={handleAddCategory}
               variant="outline"
               className="flex items-center space-x-2"
             >
@@ -247,7 +359,7 @@ const DashboardPage: FC = () => {
               No categories yet. Create your first category to get started!
             </p>
             <Button
-              onClick={() => setIsCategoryModalOpen(true)}
+              onClick={handleAddCategory}
               variant="primary"
             >
               Create Category
@@ -258,10 +370,14 @@ const DashboardPage: FC = () => {
             categories={categories}
             tickets={tickets}
             onTicketsUpdate={handleTicketsUpdate}
+            onCategoriesUpdate={handleCategoriesUpdate}
             onAddTicket={handleAddTicket}
             onViewTicket={handleViewTicket}
             onEditTicket={handleEditTicket}
             onViewTicketDetails={handleViewTicketDetails}
+            onEditCategory={handleEditCategory}
+            onDeleteCategory={handleDeleteCategory}
+            onDeleteTicket={handleDeleteTicket}
             onError={handleError}
           />
         )}
@@ -280,8 +396,22 @@ const DashboardPage: FC = () => {
 
       <CategoryModal
         isOpen={isCategoryModalOpen}
-        onClose={() => setIsCategoryModalOpen(false)}
+        onClose={handleCloseCategoryModal}
         onSubmit={handleCreateCategory}
+        onUpdate={handleUpdateCategory}
+        category={selectedCategory}
+        mode={categoryModalMode}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        isLoading={confirmDialog.isLoading}
+        variant="danger"
+        confirmText="Delete"
       />
     </div>
   );

@@ -1,14 +1,27 @@
-import React, { FC, FormEvent, useState } from "react";
+import React, { FC, FormEvent, useState, useEffect } from "react";
 import Modal from "@/components/Modal";
 import Button from "@/components/Button";
 import Input from "@/components/form/Input";
 import { CreateCategoryForm } from "@/types/forms";
+import { Category } from "@/types/models";
 
-const CategoryModal: FC<{
+interface CategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: CreateCategoryForm) => void;
-}> = ({ isOpen, onClose, onSubmit }) => {
+  onUpdate?: (categoryId: string, data: CreateCategoryForm) => void;
+  category?: Category | null;
+  mode?: "create" | "edit";
+}
+
+const CategoryModal: FC<CategoryModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onSubmit, 
+  onUpdate,
+  category = null,
+  mode = "create"
+}) => {
   const [formData, setFormData] = useState<CreateCategoryForm>({
     name: "",
     color: "#3B82F6",
@@ -24,19 +37,36 @@ const CategoryModal: FC<{
     "#6B7280",
   ];
 
+  useEffect(() => {
+    if (category && mode === "edit") {
+      setFormData({
+        name: category.name,
+        color: category.color,
+      });
+    } else {
+      setFormData({ name: "", color: "#3B82F6" });
+    }
+  }, [category, mode, isOpen]);
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (mode === "edit" && category && onUpdate) {
+      onUpdate(category.id, formData);
+    } else {
+      onSubmit(formData);
+    }
     setFormData({ name: "", color: "#3B82F6" });
     onClose();
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <h2 className="text-lg font-semibold mb-4">Add New Category</h2>
+      <h2 className="text-lg font-semibold mb-4">
+        {mode === "edit" ? "Edit Category" : "Add New Category"}
+      </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          label="Name *"
+          label="Name"
           type="text"
           required
           value={formData.name}
@@ -78,7 +108,7 @@ const CategoryModal: FC<{
             Cancel
           </Button>
           <Button type="submit" variant="primary">
-            Add Category
+            {mode === "edit" ? "Update Category" : "Add Category"}
           </Button>
         </div>
       </form>
