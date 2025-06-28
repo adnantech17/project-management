@@ -65,13 +65,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           isSidebarOpen={isSidebarOpen}
         />
         
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 pt-16 overflow-hidden">
           <Sidebar 
             isOpen={isSidebarOpen}
             onClose={closeSidebar}
           />
           
-          <main className="flex-1 overflow-hidden transition-all duration-300 ease-in-out lg:ml-0">
+          <main className={`flex-1 overflow-hidden transition-all duration-300 ease-in-out ${isSidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
             <div className="h-full overflow-auto">
               {children}
             </div>

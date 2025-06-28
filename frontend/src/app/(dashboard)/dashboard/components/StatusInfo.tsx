@@ -1,25 +1,26 @@
-import { AlertCircle, CheckCircle } from "lucide-react";
-import { FC } from "react";
+import { isTicketExpiringSoon, isTicketOverdue } from "@/utils/date";
+import { AlertCircle, CheckCircle, Calendar } from "lucide-react";
+import { FC, memo } from "react";
+import { formatDate } from "@/utils/date";
 
 interface StatusInfoProps {
   expiryDate?: string;
   className?: string;
+  showDate?: boolean;
 }
 
 const StatusInfo: FC<StatusInfoProps> = ({
   expiryDate,
   className = "",
+  showDate = false,
 }) => {
   if (!expiryDate) return null;
 
-  const now = new Date();
-  const expiry = new Date(expiryDate);
-  const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-
-  const isOverdue = expiry < now;
-  const isExpiringSoon = expiry < threeDaysFromNow;
+  const isOverdue = isTicketOverdue(expiryDate);
+  const isExpiringSoon = isTicketExpiringSoon(expiryDate);
 
   let statusConfig;
+
   if (isOverdue) {
     statusConfig = {
       text: "Overdue",
@@ -29,7 +30,7 @@ const StatusInfo: FC<StatusInfoProps> = ({
   } else if (isExpiringSoon) {
     statusConfig = {
       text: "Due Soon",
-      color: "text-orange-600 bg-orange-50 border-orange-200",
+      color: "text-yellow-500 bg-orange-50 border-orange-200",
       icon: AlertCircle,
     };
   } else {
@@ -43,13 +44,22 @@ const StatusInfo: FC<StatusInfoProps> = ({
   const StatusIcon = statusConfig.icon;
 
   return (
-    <div
-      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${statusConfig.color} ${className}`}
-    >
-      <StatusIcon size={16} className="mr-2" />
-      {statusConfig.text}
+    <div className={`space-y-1 ${className}`}>
+      <div
+        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${statusConfig.color}`}
+      >
+        <StatusIcon size={16} className="mr-2" />
+        {statusConfig.text}
+      </div>
+      
+      {showDate && expiryDate && (
+        <div className="flex items-center space-x-1 text-xs text-gray-500">
+          <Calendar size={12} />
+          <span>{formatDate(expiryDate)}</span>
+        </div>
+      )}
     </div>
   );
 };
 
-export default StatusInfo;
+export default memo(StatusInfo);

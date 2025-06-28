@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { TicketHistory } from "@/types/models";
 import { getAllActivityLogs } from "@/service/tickets";
 import { History, Eye } from "lucide-react";
@@ -60,10 +60,10 @@ export default function ActivityLogPage() {
     setActivityLogs([]);
   };
 
-  const handleActivityClick = (activity: TicketHistory) => {
+  const handleActivityClick = useCallback((activity: TicketHistory) => {
     setSelectedActivity(activity);
     setIsModalOpen(true);
-  };
+  }, []);
 
   if (loading && activityLogs.length === 0) {
     return (
@@ -133,39 +133,37 @@ export default function ActivityLogPage() {
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="max-h-[calc(100vh-200px)] overflow-y-auto">
-            <div className="divide-y divide-gray-200">
-              {activityLogs.map((activity, index) => (
-                <div key={activity.id} className="p-4">
-                  <div className="flex items-start space-x-4">
-                    <ActivityItem
-                      activity={activity}
-                      variant="detailed"
-                      onClick={handleActivityClick}
-                      className="flex-1"
-                    />
-                    <div className="flex-shrink-0">
-                      <Eye className="h-4 w-4 text-gray-400" />
-                    </div>
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="divide-y divide-gray-200">
+            {activityLogs.map((activity, index) => (
+              <div key={activity.id} className="p-4">
+                <div className="flex items-start space-x-4">
+                  <ActivityItem
+                    activity={activity}
+                    variant="detailed"
+                    onClick={handleActivityClick}
+                    className="flex-1"
+                  />
+                  <div className="flex-shrink-0">
+                    <Eye className="h-4 w-4 text-gray-400" />
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {hasMore && (
-              <div className="p-4 text-center border-t border-gray-200">
-                <Button
-                  onClick={loadMore}
-                  variant="ghost"
-                  disabled={loading}
-                  className="text-sm"
-                >
-                  {loading ? "Loading..." : "Load More"}
-                </Button>
               </div>
-            )}
+            ))}
           </div>
+
+          {hasMore && (
+            <div className="p-4 text-center border-t border-gray-200">
+              <Button
+                onClick={loadMore}
+                variant="ghost"
+                disabled={loading}
+                className="text-sm"
+              >
+                {loading ? "Loading..." : "Load More"}
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

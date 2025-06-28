@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FC, useState, useEffect } from "react";
+import React, { FC, useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Ticket, Category, TicketHistory as TicketHistoryType, User } from "@/types/models";
 import { getTicket, updateTicket } from "@/service/tickets";
@@ -133,6 +133,17 @@ const TicketDetailPage: FC = () => {
 
   const selectedCategory = categories.find(cat => cat.id === formData.category_id);
 
+  const handleDescriptionChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, description: value }));
+    if (ticketId && ticket) {
+      updateDescription(ticketId, value, ticket.description || "");
+    }
+  }, [ticketId, ticket, updateDescription]);
+
+  const handleCategoryChange = useCallback((categoryId: string) => {
+    setFormData(prev => ({ ...prev, category_id: categoryId }));
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -238,12 +249,7 @@ const TicketDetailPage: FC = () => {
                 <RichTextEditor
                   label="Description"
                   value={currentDescription}
-                  onChange={(value) => {
-                    setFormData(prev => ({ ...prev, description: value }));
-                    if (ticketId && ticket) {
-                      updateDescription(ticketId, value, ticket.description || "");
-                    }
-                  }}
+                  onChange={handleDescriptionChange}
                   placeholder="Enter task description..."
                   readonly={!isEditMode}
                 />
@@ -253,7 +259,7 @@ const TicketDetailPage: FC = () => {
                     category={selectedCategory}
                     categories={categories}
                     selectedCategoryId={formData.category_id}
-                    onCategoryChange={(categoryId) => handleFormChange('category_id', categoryId)}
+                    onCategoryChange={handleCategoryChange}
                     isEditMode={isEditMode}
                     required={true}
                   />

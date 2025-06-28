@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, memo } from "react";
 
 interface CategoryDisplayProps {
   category?: { id: string; name: string; color: string };
@@ -48,4 +48,4 @@ const CategoryDisplay: FC<CategoryDisplayProps> = ({
   );
 };
 
-export default CategoryDisplay;
+export default memo(CategoryDisplay);

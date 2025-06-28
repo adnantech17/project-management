@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FC, useState, useEffect, useMemo } from "react";
+import React, { FC, useState, useEffect, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { Calendar } from "lucide-react";
@@ -20,9 +20,9 @@ const AllTicketsPage: FC = () => {
   const currentPage = Number(searchParams.get("page")) || 1;
   const pageSize = Number(searchParams.get("pageSize")) || 10;
 
-  const handleRowClick = (ticket: Ticket) => {
+  const handleRowClick = useCallback((ticket: Ticket) => {
     router.push(`/dashboard/tickets/${ticket.id}`);
-  };
+  }, [router]);
 
   const columns = useMemo<ColumnDef<Ticket>[]>(
     () => [
@@ -87,7 +87,7 @@ const AllTicketsPage: FC = () => {
       setLoading(true);
       const response = await getTicketsPaginated({
         page: currentPage,
-        pageSize,
+        page_size: pageSize,
       });
       
       setTickets(response.data.items);

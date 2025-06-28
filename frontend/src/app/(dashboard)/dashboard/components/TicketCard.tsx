@@ -1,4 +1,4 @@
-import React, { FC, useState, useRef, useEffect } from "react";
+import React, { FC, useState, useRef, useEffect, memo } from "react";
 import { Ticket } from "@/types/models";
 import { Calendar, Edit, Eye, MoreHorizontal, Trash2 } from "lucide-react";
 import ProfileAvatar from "@/components/ProfileAvatar";
@@ -176,4 +176,4 @@ const TicketCard: FC<TicketCardProps> = ({
   );
 };
 
-export default TicketCard;
+export default memo(TicketCard);

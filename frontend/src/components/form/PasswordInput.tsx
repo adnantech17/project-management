@@ -1,4 +1,4 @@
-import React, { useState, FC, InputHTMLAttributes } from "react";
+import React, { useState, FC, InputHTMLAttributes, memo } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 interface PasswordInputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -22,7 +22,6 @@ const PasswordInput: FC<PasswordInputProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
 
-  // For readonly display, show placeholder text (never show actual password)
   if (readonly) {
     return (
       <div className={`space-y-1 ${className}`}>
@@ -79,4 +78,4 @@ const PasswordInput: FC<PasswordInputProps> = ({
   );
 };
 
-export default PasswordInput;
+export default memo(PasswordInput);

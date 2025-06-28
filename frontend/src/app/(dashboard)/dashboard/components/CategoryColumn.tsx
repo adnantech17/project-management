@@ -1,4 +1,4 @@
-import React, { FC, Fragment, useState, useRef, useEffect } from "react";
+import React, { FC, Fragment, useState, useRef, useEffect, useCallback } from "react";
 import { Plus, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import TicketCard from "@/app/(dashboard)/dashboard/components/TicketCard";
 import Button from "@/components/Button";
@@ -147,6 +147,16 @@ const CategoryColumn: FC<CategoryColumnProps> = ({
     setShowDropdown(!showDropdown);
   };
 
+  const handleEditClick = useCallback(() => {
+    setShowDropdown(false);
+    onEditCategory(category);
+  }, [category, onEditCategory]);
+
+  const handleDeleteClick = useCallback(() => {
+    setShowDropdown(false);
+    onDeleteCategory(category);
+  }, [category, onDeleteCategory]);
+
   const handleMenuAction = (action: () => void) => (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDropdown(false);
@@ -195,14 +205,14 @@ const CategoryColumn: FC<CategoryColumnProps> = ({
           {showDropdown && (
             <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-36 overflow-hidden">
               <button
-                onClick={handleMenuAction(() => onEditCategory(category))}
+                onClick={handleMenuAction(handleEditClick)}
                 className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
               >
                 <Edit size={14} />
                 <span>Edit</span>
               </button>
               <button
-                onClick={handleMenuAction(() => onDeleteCategory(category))}
+                onClick={handleMenuAction(handleDeleteClick)}
                 className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
               >
                 <Trash2 size={14} />

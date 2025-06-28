@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { FC, memo } from "react";
 
 interface ProfileAvatarProps {
   username: string;
@@ -77,4 +77,4 @@ const ProfileAvatar: FC<ProfileAvatarProps> = ({
   );
 };
 
-export default ProfileAvatar;
+export default memo(ProfileAvatar);

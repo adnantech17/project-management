@@ -7,7 +7,7 @@ export interface GetTicketsParams {
   assignedUserIds?: string[];
   onlyMyIssues?: boolean;
   page?: number;
-  pageSize?: number;
+  page_size?: number;
 }
 
 export const getTickets = async (params: GetTicketsParams = {}) => {

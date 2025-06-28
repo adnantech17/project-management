@@ -1,4 +1,4 @@
-import React, { FC, useState, useEffect } from "react";
+import React, { FC, useState, useEffect, useCallback } from "react";
 import { Category, Ticket } from "@/types/models";
 import CategoryColumn from "./CategoryColumn";
 import { dragDropTicket, getTickets, deleteTicket } from "@/service/tickets";
@@ -156,24 +156,28 @@ const DragDropBoard: FC<DragDropBoardProps> = ({
       .sort((a, b) => a.position - b.position);
   };
 
+  const handleBoardDrop = useCallback((e: React.DragEvent) => {
+    if (!draggedCategoryId) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const categoryWidth = 320 + 24;
+    const targetIndex = Math.floor(x / categoryWidth);
+    handleCategoryDrop(e, Math.min(targetIndex, categories.length - 1));
+  }, [draggedCategoryId, handleCategoryDrop]);
+
+  const handleBoardDragOver = useCallback((e: React.DragEvent) => {
+    if (draggedCategoryId) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+    }
+  }, [draggedCategoryId]);
+
   return (
     <div 
       className="flex space-x-6 max-h-[82vh] lg:max-h-[78vh] overflow-x-auto px-6"
-      onDragOver={(e) => {
-        if (draggedCategoryId) {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = "move";
-        }
-      }}
-      onDrop={(e) => {
-        if (draggedCategoryId) {
-          const rect = e.currentTarget.getBoundingClientRect();
-          const x = e.clientX - rect.left;
-          const categoryWidth = 320 + 24;
-          const targetIndex = Math.floor(x / categoryWidth);
-          handleCategoryDrop(e, Math.min(targetIndex, categories.length - 1));
-        }
-      }}
+      onDragOver={handleBoardDragOver}
+      onDrop={handleBoardDrop}
     >
       {categories.map((category, index) => (
         <CategoryColumn

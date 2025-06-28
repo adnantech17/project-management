@@ -96,6 +96,8 @@ class TicketService:
             query = query.filter(Ticket.category_id == category_id)
             
         query = query.order_by(Ticket.position)
+
+        print(page, page_size)
         
         if page_size == 0:
             tickets = query.all()

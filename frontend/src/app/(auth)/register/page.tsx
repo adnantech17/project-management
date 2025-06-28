@@ -135,13 +135,6 @@ export default function RegisterPage() {
         <div className="absolute top-20 right-20 w-32 h-32 bg-white/5 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 left-20 w-40 h-40 bg-blue-400/10 rounded-full blur-3xl"></div>
       </div>
-      <Button
-        variant="primary"
-        size="md"
-        className="fixed bottom-6 right-6 w-12 h-12 rounded-full shadow-lg"
-      >
-        <Moon className="w-5 h-5" />
-      </Button>
     </div>
   );
 }

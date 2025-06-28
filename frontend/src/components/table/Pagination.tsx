@@ -18,8 +18,9 @@ const Pagination = <T,>({
   const { pageIndex, pageSize } = table.getState().pagination;
   const currentPage = pageIndex + 1;
   const totalPages = table.getPageCount();
+  const currentPageData = table.getRowModel().rows;
   
-  const startItem = totalItems === 0 ? 0 : pageIndex * pageSize + 1;
+  const startItem = currentPageData.length === 0 ? 0 : pageIndex * pageSize + 1;
   const endItem = Math.min((pageIndex + 1) * pageSize, totalItems);
   
   const canPreviousPage = table.getCanPreviousPage();

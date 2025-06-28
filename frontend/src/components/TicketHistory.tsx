@@ -1,4 +1,4 @@
-import React, { FC, FormEvent } from "react";
+import React, { FC, FormEvent, memo } from "react";
 import { TicketHistory as TicketHistoryType } from "@/types/models";
 import { History } from "lucide-react";
 import Button from "@/components/Button";
@@ -75,4 +75,4 @@ const TicketHistory: FC<TicketHistoryProps> = ({
   );
 };
 
-export default TicketHistory;
+export default memo(TicketHistory);

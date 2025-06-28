@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { FC, memo } from "react";
 import { getActionIconType, getActionIconColor, ActivityActionType } from "@/utils/activity";
 
 interface ActivityIconProps {
@@ -35,4 +35,4 @@ const ActivityIcon: FC<ActivityIconProps> = ({
   );
 };
 
-export default ActivityIcon;
+export default memo(ActivityIcon);

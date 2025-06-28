@@ -42,7 +42,7 @@ function Table<T>({
   }), [currentPage, pageSize]);
 
   const table = useReactTable({
-    data,
+    data: data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
@@ -52,7 +52,7 @@ function Table<T>({
     },
     onPaginationChange: (updater) => {
       const newPagination = typeof updater === 'function' ? updater(pagination) : updater;
-      const newPage = newPagination.pageIndex + 1; // Convert back to 1-indexed
+      const newPage = newPagination.pageIndex + 1;
       const newPageSize = newPagination.pageSize;
       
       updateQueryParams({ page: newPage, pageSize: newPageSize });

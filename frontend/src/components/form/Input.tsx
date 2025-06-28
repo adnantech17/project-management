@@ -1,5 +1,5 @@
 import { formatDate } from "@/utils/date";
-import React, { InputHTMLAttributes, FC } from "react";
+import React, { InputHTMLAttributes, FC, memo } from "react";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -73,4 +73,4 @@ const Input: FC<InputProps> = ({
   );
 };
 
-export default Input;
+export default memo(Input);

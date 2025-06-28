@@ -1,6 +1,6 @@
 import { formatDateTime } from "@/utils/date";
 import { Clock } from "lucide-react";
-import { FC } from "react";
+import { FC, memo } from "react";
 
 interface TicketInfoProps {
   createdAt: string;
@@ -44,4 +44,4 @@ const TicketInfo: FC<TicketInfoProps> = ({
   </div>
 );
 
-export default TicketInfo;
+export default memo(TicketInfo);

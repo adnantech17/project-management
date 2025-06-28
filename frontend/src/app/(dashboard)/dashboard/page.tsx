@@ -341,7 +341,6 @@ const DashboardPage: FC = () => {
             className="flex items-center space-x-2"
           >
             <Filter size={16} />
-            <span>Filters</span>
             {isFiltersOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </Button>
           
@@ -352,6 +351,7 @@ const DashboardPage: FC = () => {
               className="flex items-center space-x-2"
             >
               <Plus size={16} />
+              <span className="sm:hidden">Category</span>
               <span className="hidden sm:inline">Add Category</span>
             </Button>
 
@@ -361,6 +361,7 @@ const DashboardPage: FC = () => {
               className="flex items-center space-x-2"
             >
               <Plus size={16} />
+              <span className="sm:hidden">Ticket</span>
               <span className="hidden sm:inline">Add Task</span>
             </Button>
           </div>

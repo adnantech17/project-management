@@ -1,4 +1,4 @@
-import React, { FC, SelectHTMLAttributes } from "react";
+import React, { FC, memo, SelectHTMLAttributes } from "react";
 
 interface SelectOption {
   value: string;
@@ -89,4 +89,4 @@ const Select: FC<SelectProps> = ({
   );
 };
 
-export default Select;
+export default memo(Select);

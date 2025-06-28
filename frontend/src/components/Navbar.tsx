@@ -44,7 +44,7 @@ const Navbar: FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen }) => {
   }, []);
 
   return (
-    <nav className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between relative z-50 h-[8vh]">
+    <nav className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-50 h-16">
       <div className="flex items-center space-x-4">
         <Button
           onClick={onToggleSidebar}
@@ -79,7 +79,7 @@ const Navbar: FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen }) => {
           </Button>
 
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1">
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
               <Button
                 onClick={handleSettings}
                 variant="ghost"

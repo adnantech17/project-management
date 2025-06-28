@@ -3,11 +3,6 @@ import { TicketHistory } from "@/types/models";
 
 export type ActivityActionType = "created" | "moved" | "updated" | "deleted";
 
-export interface ActivityIconProps {
-  size?: number;
-  className?: string;
-}
-
 export const getActionIconType = (actionType: ActivityActionType): LucideIcon => {
   switch (actionType) {
     case "created":

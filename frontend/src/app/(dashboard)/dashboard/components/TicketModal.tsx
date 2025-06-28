@@ -1,4 +1,4 @@
-import React, { FC, FormEvent, useState, useEffect } from "react";
+import React, { FC, FormEvent, useState, useEffect, useCallback } from "react";
 import Modal from "@/components/Modal";
 import Button from "@/components/Button";
 import Input from "@/components/form/Input";
@@ -143,8 +143,14 @@ const TicketModal: FC<TicketModalProps> = ({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleDescriptionChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, description: value }));
+    if (ticket?.id) {
+      updateDescription(ticket.id, value, (ticketWithHistory || ticket)?.description || "");
+    }
+  }, [ticket, ticketWithHistory, updateDescription]);
+
   const categoryOptions = categories.map(cat => ({ label: cat.name, value: cat.id }));
-  const selectedCategory = categories.find(cat => cat.id === formData.category_id);
   const currentTicket = ticketWithHistory || ticket;
 
   const modalTitle = isCreate ? "Add New Task" : isEdit ? "Edit Task" : "Task Details";
@@ -214,12 +220,7 @@ const TicketModal: FC<TicketModalProps> = ({
               <RichTextEditor
                 label="Description"
                 value={currentDescription}
-                onChange={(value) => {
-                  setFormData(prev => ({ ...prev, description: value }));
-                  if (ticket?.id) {
-                    updateDescription(ticket.id, value, (ticketWithHistory || ticket)?.description || "");
-                  }
-                }}
+                onChange={handleDescriptionChange}
                 placeholder="Enter task description..."
                 readonly={isReadonly}
               />

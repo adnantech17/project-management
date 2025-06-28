@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, memo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Button from "./Button";
 import { Home, FileText, Settings, History } from "lucide-react";
@@ -53,20 +53,20 @@ const Sidebar: FC<SidebarProps> = ({ isOpen, onClose }) => {
     <>
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
           onClick={onClose}
         />
       )}
 
       <aside 
         className={`
-          fixed top-[60px] left-0 w-64 bg-white border-r border-gray-200 
-          transform transition-transform duration-300 ease-in-out z-50
-          lg:relative lg:top-0 lg:h-full lg:translate-x-0
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+          fixed top-16 left-0 w-64 bg-white border-r border-gray-200 
+          transform transition-transform duration-300 ease-in-out z-40
+          h-[calc(100vh-4rem)]
+          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto h-[92vh]">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto h-full">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -91,4 +91,4 @@ const Sidebar: FC<SidebarProps> = ({ isOpen, onClose }) => {
   );
 };
 
-export default Sidebar;
+export default memo(Sidebar);

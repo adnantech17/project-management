@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import React, { FC, memo } from "react";
 import { TicketHistory } from "@/types/models";
 import { formatDateTime } from "@/utils/date";
 import { formatActionDescription, getChangedFields, getActionColor } from "@/utils/activity";
@@ -74,4 +74,4 @@ const ActivityItem: FC<ActivityItemProps> = ({
   );
 };
 
-export default ActivityItem;
+export default memo(ActivityItem);
