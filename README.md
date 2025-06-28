@@ -70,7 +70,7 @@ npm run dev                                     # Start development server (dail
 - API Docs: http://localhost:8000/docs
 
 ## Default Login
-- Email: john.doe@example.com
+- Username: adnan
 - Password: password123
 
 ## Database Management

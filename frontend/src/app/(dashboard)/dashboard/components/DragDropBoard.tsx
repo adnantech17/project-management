@@ -158,7 +158,7 @@ const DragDropBoard: FC<DragDropBoardProps> = ({
 
   return (
     <div 
-      className="flex space-x-6 overflow-x-auto pb-6"
+      className="flex space-x-6 max-h-[83vh] overflow-x-auto px-6"
       onDragOver={(e) => {
         if (draggedCategoryId) {
           e.preventDefault();

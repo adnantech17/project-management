@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, FC } from "react";
-import { Filter, Plus } from "lucide-react";
+import { Filter, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { CreateTicketForm, CreateCategoryForm } from "@/types/forms";
 import { Category, Ticket, User } from "@/types/models";
 import TicketModal from "@/app/(dashboard)/dashboard/components/TicketModal";
@@ -53,6 +53,8 @@ const DashboardPage: FC = () => {
   const [search, setSearch] = useState<string>("");
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [onlyMyIssues, setOnlyMyIssues] = useState<boolean>(false);
+  
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -311,27 +313,26 @@ const DashboardPage: FC = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between mb-4">
-          <FilterBar
-            search={search}
-            onSearchChange={setSearch}
-            selectedUserIds={selectedUserIds}
-            onUserIdsChange={setSelectedUserIds}
-            onlyMyIssues={onlyMyIssues}
-            onOnlyMyIssuesChange={setOnlyMyIssues}
-            users={users}
-            className="flex-1 mr-4"
-          />
+      <div className="bg-white border-b border-gray-200 p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4 lg:hidden">
+          <Button
+            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            variant="outline"
+            className="flex items-center space-x-2"
+          >
+            <Filter size={16} />
+            <span>Filters</span>
+            {isFiltersOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </Button>
           
-          <div className="flex items-center space-x-3">
+          <div className="flex gap-2">
             <Button
               onClick={handleAddCategory}
               variant="outline"
               className="flex items-center space-x-2"
             >
               <Plus size={16} />
-              <span>Add Category</span>
+              <span className="hidden sm:inline">Add Category</span>
             </Button>
 
             <Button
@@ -340,8 +341,46 @@ const DashboardPage: FC = () => {
               className="flex items-center space-x-2"
             >
               <Plus size={16} />
-              <span>Add New Task</span>
+              <span className="hidden sm:inline">Add Task</span>
             </Button>
+          </div>
+        </div>
+
+        <div className={`
+          ${isFiltersOpen ? 'block' : 'hidden'} lg:block
+          ${isFiltersOpen ? 'mb-4' : ''}
+        `}>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <FilterBar
+              search={search}
+              onSearchChange={setSearch}
+              selectedUserIds={selectedUserIds}
+              onUserIdsChange={setSelectedUserIds}
+              onlyMyIssues={onlyMyIssues}
+              onOnlyMyIssuesChange={setOnlyMyIssues}
+              users={users}
+              className="flex-1"
+            />
+            
+            <div className="hidden lg:flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+              <Button
+                onClick={handleAddCategory}
+                variant="outline"
+                className="flex items-center justify-center space-x-2 w-full sm:w-auto"
+              >
+                <Plus size={16} />
+                <span>Add Category</span>
+              </Button>
+
+              <Button
+                onClick={() => handleAddTicket()}
+                variant="primary"
+                className="flex items-center justify-center space-x-2 w-full sm:w-auto"
+              >
+                <Plus size={16} />
+                <span>Add New Task</span>
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -352,9 +391,9 @@ const DashboardPage: FC = () => {
         )}
       </div>
 
-      <main className="flex-1 p-6 bg-gray-50 overflow-auto">
+      <div className="flex-1 bg-gray-50 overflow-auto">
         {categories.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-12 px-4">
             <p className="text-gray-500 mb-4">
               No categories yet. Create your first category to get started!
             </p>
@@ -381,7 +420,7 @@ const DashboardPage: FC = () => {
             onError={handleError}
           />
         )}
-      </main>
+      </div>
 
       <TicketModal
         ticket={selectedTicket}

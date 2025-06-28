@@ -2,7 +2,7 @@ import React, { FC, useState, useRef, useEffect } from "react";
 import { Ticket } from "@/types/models";
 import { Calendar, Edit, Eye, MoreHorizontal, Trash2 } from "lucide-react";
 import ProfileAvatar from "@/components/ProfileAvatar";
-import MDEditor from "@uiw/react-md-editor";
+import removeMarkdown from 'remove-markdown';
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -26,7 +26,7 @@ const TicketCard: FC<TicketCardProps> = ({
 
   const isExpiringSoon =
     ticket.expiry_date &&
-    new Date(ticket.expiry_date) <
+    new Date(ticket.expiry_date) 
       new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
   const isOverdue =
     ticket.expiry_date && new Date(ticket.expiry_date) < new Date();
@@ -37,6 +37,20 @@ const TicketCard: FC<TicketCardProps> = ({
       day: "numeric",
       year: "numeric",
     });
+
+  const getTruncatedDescription = (content: string | null | undefined) => {
+    if (!content) return null;
+    
+    // Strip all markdown and HTML
+    const plainText = removeMarkdown(content).trim();
+    
+    // Truncate
+    if (plainText.length <= 100) {
+      return plainText;
+    }
+    
+    return plainText.substring(0, 100).trim() + '...';
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -72,6 +86,8 @@ const TicketCard: FC<TicketCardProps> = ({
     action();
   };
 
+  const truncatedDescription = getTruncatedDescription(ticket.description);
+
   return (
     <div
       className={`
@@ -87,7 +103,7 @@ const TicketCard: FC<TicketCardProps> = ({
       draggable
       onDragStart={handleDragStart}
     >
-      <div className="flex justify-between items-start mb-2">
+      <div className="flex justify-between items-start mb-3">
         <h3 className="font-medium text-gray-900 text-sm leading-5 flex-1 mr-2">
           {ticket.title}
         </h3>
@@ -127,19 +143,11 @@ const TicketCard: FC<TicketCardProps> = ({
         </div>
       </div>
 
-      <div className="prose prose-sm max-w-none text-gray-900">
-        {ticket.description ? (
-          <MDEditor.Markdown
-            source={ticket.description}
-            style={{
-              backgroundColor: "transparent",
-              color: "inherit",
-            }}
-          />
-        ) : (
-          <span className="text-gray-500 italic">No description provided</span>
-        )}
-      </div>
+      {truncatedDescription && (
+        <div className="text-sm text-gray-600 mb-3 leading-relaxed">
+          {truncatedDescription}
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         {ticket.expiry_date && (
