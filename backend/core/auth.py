@@ -9,7 +9,7 @@ from .database import get_db
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
-REFRESH_TOKEN_EXPIRE_MINUTES = 30
+REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 30
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -33,6 +33,13 @@ def decode_token(token: str):
 def get_current_user(request: Request, db: Session = Depends(get_db)):
     """Get current user - middleware handles token refresh"""
     from models.user import User
+    
+    if hasattr(request.state, 'validated_user') and request.state.validated_user:
+        username = request.state.validated_user
+        user = db.query(User).filter(User.username == username).first()
+        
+        if user:
+            return user
     
     access_token = request.cookies.get("access_token")
     

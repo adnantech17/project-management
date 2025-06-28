@@ -77,6 +77,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 content={"detail": "Not authenticated"}
             )
 
+        request.state.validated_user = valid_user
+        request.state.token_refreshed = bool(new_access_token)
+
         response = await call_next(request)
 
         if new_access_token:
