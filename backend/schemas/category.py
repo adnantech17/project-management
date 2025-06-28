@@ -1,10 +1,7 @@
 from pydantic import BaseModel
-from typing import Optional, List, TYPE_CHECKING
+from typing import Optional, List
 import uuid
 from datetime import datetime
-
-if TYPE_CHECKING:
-    from .ticket import TicketOut
 
 class CategoryBase(BaseModel):
     name: str
@@ -27,9 +24,6 @@ class CategoryOut(CategoryBase):
     
     class Config:
         from_attributes = True
-
-class CategoryWithTickets(CategoryOut):
-    tickets: List["TicketOut"] = [] 
 
 class CategoryReorder(BaseModel):
     id: uuid.UUID

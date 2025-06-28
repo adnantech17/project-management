@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import uuid
 
-from schemas.ticket import TicketCreate, TicketUpdate, TicketOut, DragDropRequest, TicketWithCategoryAndHistory, PaginatedTicketOut
+from schemas import TicketCreate, TicketUpdate, TicketOut, DragDropRequest, TicketWithCategoryAndHistory, PaginatedTicketOut
 from schemas.ticket_history import TicketHistoryOut
 from core.database import get_db
 from core.auth import get_current_user

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import uuid
 
-from schemas.category import CategoryCreate, CategoryUpdate, CategoryOut, CategoryWithTickets, CategoryReorder
+from schemas import CategoryCreate, CategoryUpdate, CategoryOut, CategoryWithTickets, CategoryReorder
 from core.database import get_db
 from core.auth import get_current_user
 from services.category_service import CategoryService

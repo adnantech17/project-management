@@ -3,7 +3,6 @@ from typing import Optional, List, Union
 import uuid
 from datetime import datetime
 
-from .category import CategoryOut
 from .ticket_history import TicketHistoryOut
 from .user import UserAssigned
 
@@ -49,19 +48,6 @@ class TicketOut(TicketBase):
     
     class Config:
         from_attributes = True
-
-class TicketWithCategory(TicketOut):
-    category: CategoryOut
-
-class TicketWithCategoryAndHistory(TicketWithCategory):
-    history: List[TicketHistoryOut] = []
-
-class PaginatedTicketOut(BaseModel):
-    items: List[TicketWithCategory]
-    total: int
-    page: int
-    page_size: int
-    total_pages: int
 
 class DragDropRequest(BaseModel):
     ticket_id: str
