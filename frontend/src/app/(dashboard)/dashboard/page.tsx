@@ -15,6 +15,8 @@ import { getCategories, createCategory, updateCategory, deleteCategory } from "@
 import { getTickets, createTicket, updateTicket, deleteTicket } from "@/service/tickets";
 import { getAllUsers } from "@/service/auth";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { sequentialMatch } from "@/utils/string";
+import { isTicketOverdue, isTicketExpiringSoon, isFinalCategory } from "@/utils/date";
 
 const DashboardPage: FC = () => {
   const { user } = useAuth();
@@ -53,6 +55,8 @@ const DashboardPage: FC = () => {
   const [search, setSearch] = useState<string>("");
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [onlyMyIssues, setOnlyMyIssues] = useState<boolean>(false);
+  const [overdue, setOverdue] = useState<boolean>(false);
+  const [expiringSoon, setExpiringSoon] = useState<boolean>(false);
   
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
@@ -66,7 +70,7 @@ const DashboardPage: FC = () => {
     if (user) {
       applyFilters();
     }
-  }, [search, selectedUserIds, onlyMyIssues, allTickets, user]);
+  }, [search, selectedUserIds, onlyMyIssues, overdue, expiringSoon, allTickets, user]);
 
   const loadData = async () => {
     try {
@@ -92,12 +96,12 @@ const DashboardPage: FC = () => {
 
   const applyFilters = () => {
     let filtered = [...allTickets];
-
+    
     if (search.trim()) {
-      const searchTerm = search.toLowerCase();
+      const searchTerm = search.trim();
       filtered = filtered.filter(ticket => 
-        ticket.title.toLowerCase().includes(searchTerm) ||
-        (ticket.description && ticket.description.toLowerCase().includes(searchTerm))
+        sequentialMatch(ticket.title, searchTerm) ||
+        (ticket.description && sequentialMatch(ticket.description, searchTerm))
       );
     }
 
@@ -113,6 +117,22 @@ const DashboardPage: FC = () => {
         ticket.assigned_users && 
         ticket.assigned_users.some(assignedUser => assignedUser.username === user.username)
       );
+    }
+
+    if (overdue) {
+      filtered = filtered.filter(ticket => {
+        const category = categories.find(cat => cat.id === ticket.category_id);
+        const isInFinalCategory = category && isFinalCategory(category.name);
+        return !isInFinalCategory && isTicketOverdue(ticket.expiry_date);
+      });
+    }
+
+    if (expiringSoon) {
+      filtered = filtered.filter(ticket => {
+        const category = categories.find(cat => cat.id === ticket.category_id);
+        const isInFinalCategory = category && isFinalCategory(category.name);
+        return !isInFinalCategory && isTicketExpiringSoon(ticket.expiry_date);
+      });
     }
 
     setTickets(filtered);
@@ -313,7 +333,7 @@ const DashboardPage: FC = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="bg-white border-b border-gray-200 p-4 sm:p-6">
+      <div className="bg-white border-b border-gray-200 p-4 sm:p-6 lg:h-[14vh]">
         <div className="flex items-center justify-between mb-4 lg:hidden">
           <Button
             onClick={() => setIsFiltersOpen(!isFiltersOpen)}
@@ -358,7 +378,13 @@ const DashboardPage: FC = () => {
               onUserIdsChange={setSelectedUserIds}
               onlyMyIssues={onlyMyIssues}
               onOnlyMyIssuesChange={setOnlyMyIssues}
+              overdue={overdue}
+              onOverdueChange={setOverdue}
+              expiringSoon={expiringSoon}
+              onExpiringSoonChange={setExpiringSoon}
               users={users}
+              tickets={allTickets}
+              categories={categories}
               className="flex-1"
             />
             
@@ -427,6 +453,7 @@ const DashboardPage: FC = () => {
         isOpen={isTicketModalOpen}
         onClose={handleCloseTicketModal}
         categories={categories}
+        selectedCategoryId={selectedCategoryForTicket}
         onSubmit={handleCreateTicket}
         onUpdate={handleUpdateTicket}
         mode={ticketModalMode}

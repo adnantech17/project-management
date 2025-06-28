@@ -3,6 +3,7 @@ import { Ticket } from "@/types/models";
 import { Calendar, Edit, Eye, MoreHorizontal, Trash2 } from "lucide-react";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import removeMarkdown from 'remove-markdown';
+import { formatDate, isTicketOverdue, isTicketExpiringSoon } from "@/utils/date";
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -24,27 +25,14 @@ const TicketCard: FC<TicketCardProps> = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const isExpiringSoon =
-    ticket.expiry_date &&
-    new Date(ticket.expiry_date) 
-      new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
-  const isOverdue =
-    ticket.expiry_date && new Date(ticket.expiry_date) < new Date();
-
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+  const isExpiringSoon = isTicketExpiringSoon(ticket.expiry_date);
+  const isOverdue = isTicketOverdue(ticket.expiry_date);
 
   const getTruncatedDescription = (content: string | null | undefined) => {
     if (!content) return null;
     
-    // Strip all markdown and HTML
     const plainText = removeMarkdown(content).trim();
     
-    // Truncate
     if (plainText.length <= 100) {
       return plainText;
     }
@@ -156,7 +144,7 @@ const TicketCard: FC<TicketCardProps> = ({
               isOverdue
                 ? "text-red-600"
                 : isExpiringSoon
-                ? "text-orange-600"
+                ? "text-yellow-600"
                 : "text-gray-500"
             }`}
           >

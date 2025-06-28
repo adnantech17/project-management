@@ -1,3 +1,4 @@
+import { formatDate } from "@/utils/date";
 import React, { InputHTMLAttributes, FC } from "react";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -21,14 +22,9 @@ const Input: FC<InputProps> = ({
 }) => {
   const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
 
-  // For readonly display, show a clean label and value
   if (readonly) {
     const displayValue = type === "date" && value 
-      ? new Date(value.toString()).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long", 
-          day: "numeric"
-        })
+      ? formatDate(value.toString())
       : value || "—";
 
     return (

@@ -27,6 +27,7 @@ interface TicketModalProps {
   isOpen: boolean;
   onClose: () => void;
   categories: Category[];
+  selectedCategoryId?: string;
   onSubmit?: (data: CreateTicketForm) => void;
   onUpdate?: (ticketId: string, data: CreateTicketForm) => void;
   mode: "create" | "edit" | "view";
@@ -38,6 +39,7 @@ const TicketModal: FC<TicketModalProps> = ({
   isOpen,
   onClose,
   categories,
+  selectedCategoryId,
   onSubmit,
   onUpdate,
   mode,
@@ -94,11 +96,11 @@ const TicketModal: FC<TicketModalProps> = ({
         title: "",
         description: "",
         expiry_date: "",
-        category_id: categories[0]?.id || "",
+        category_id: selectedCategoryId || categories[0]?.id || "",
         assigned_user_ids: [],
       });
     }
-  }, [ticketWithHistory, ticket, mode, categories, isEdit, isCreate]);
+  }, [ticketWithHistory, ticket, mode, categories, selectedCategoryId, isEdit, isCreate]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();

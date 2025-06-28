@@ -1,9 +1,10 @@
 "use client";
 
 import React, { FC, useState, useRef, useEffect } from "react";
-import { Search, ChevronDown, Plus } from "lucide-react";
-import { User } from "@/types/models";
+import { Search, ChevronDown, Plus, Clock, AlertTriangle, User as UserIcon } from "lucide-react";
+import { User, Ticket, Category } from "@/types/models";
 import ProfileAvatar from "@/components/ProfileAvatar";
+import { isTicketOverdue, isTicketExpiringSoon, isFinalCategory } from "@/utils/date";
 
 interface FilterBarProps {
   search: string;
@@ -12,7 +13,13 @@ interface FilterBarProps {
   onUserIdsChange: (userIds: string[]) => void;
   onlyMyIssues: boolean;
   onOnlyMyIssuesChange: (value: boolean) => void;
+  overdue: boolean;
+  onOverdueChange: (value: boolean) => void;
+  expiringSoon: boolean;
+  onExpiringSoonChange: (value: boolean) => void;
   users: User[];
+  tickets: Ticket[];
+  categories: Category[];
   className?: string;
 }
 
@@ -23,7 +30,13 @@ const FilterBar: FC<FilterBarProps> = ({
   onUserIdsChange,
   onlyMyIssues,
   onOnlyMyIssuesChange,
+  overdue,
+  onOverdueChange,
+  expiringSoon,
+  onExpiringSoonChange,
   users,
+  tickets,
+  categories,
   className = "",
 }) => {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -40,6 +53,21 @@ const FilterBar: FC<FilterBarProps> = ({
   const filteredUsers = availableUsers.filter((user) =>
     user.username.toLowerCase().includes(userSearchTerm.toLowerCase())
   );
+
+  const getFilteredTickets = () => {
+    return tickets?.filter(ticket => {
+      const category = categories.find(cat => cat.id === ticket.category_id);
+      return !category || !isFinalCategory(category.name);
+    });
+  };
+
+  const filteredTickets = getFilteredTickets();
+  const overdueCount = filteredTickets?.filter(ticket => 
+    isTicketOverdue(ticket.expiry_date)
+  ).length;
+  const expiringSoonCount = filteredTickets?.filter(ticket => 
+    isTicketExpiringSoon(ticket.expiry_date)
+  ).length;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -78,19 +106,19 @@ const FilterBar: FC<FilterBarProps> = ({
   };
 
   return (
-    <div className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 ${className}`}>
-      <div className="relative flex-1 sm:flex-initial sm:w-80">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search"
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-gray-50 border-0 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition-colors"
-        />
-      </div>
+    <div className={`flex flex-col gap-3 ${className}`}>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
+        <div className="relative flex-1 sm:flex-initial sm:w-80">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-gray-50 border-0 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition-colors"
+          />
+        </div>
 
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
         <div className="relative" ref={userDropdownRef}>
           <div
             onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
@@ -206,16 +234,60 @@ const FilterBar: FC<FilterBarProps> = ({
             </div>
           )}
         </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+            type="button"
+            onClick={() => onOnlyMyIssuesChange(!onlyMyIssues)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap cursor-pointer border ${
+              onlyMyIssues
+                ? "bg-green-100 text-green-700 border-green-300"
+                : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+            }`}
+          >
+            <UserIcon size={14} />
+            <span>Only my issues</span>
+        </button>
 
-        <label className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-md cursor-pointer hover:bg-gray-100 transition-colors">
-          <input
-            type="checkbox"
-            checked={onlyMyIssues}
-            onChange={(e) => onOnlyMyIssuesChange(e.target.checked)}
-            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-          />
-          <span className="text-sm text-gray-700 whitespace-nowrap">Only my issues</span>
-        </label>
+        <button
+          type="button"
+          onClick={() => onOverdueChange(!overdue)}
+          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap cursor-pointer ${
+            overdue
+              ? "bg-red-100 text-red-700 border border-red-300"
+              : "bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100"
+          }`}
+        >
+          <AlertTriangle size={14} />
+          <span>Overdue</span>
+          {overdueCount > 0 && (
+            <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${
+              overdue ? "bg-red-200 text-red-800" : "bg-gray-200 text-gray-600"
+            }`}>
+              {overdueCount}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onExpiringSoonChange(!expiringSoon)}
+          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap cursor-pointer ${
+            expiringSoon
+              ? "bg-yellow-100 text-yellow-700 border border-yellow-300"
+              : "bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100"
+          }`}
+        >
+          <Clock size={14} />
+          <span>Expiring Soon</span>
+          {expiringSoonCount > 0 && (
+            <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${
+              expiringSoon ? "bg-yellow-200 text-yellow-800" : "bg-gray-200 text-gray-600"
+            }`}>
+              {expiringSoonCount}
+            </span>
+          )}
+        </button>
       </div>
     </div>
   );

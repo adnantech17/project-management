@@ -158,7 +158,7 @@ const DragDropBoard: FC<DragDropBoardProps> = ({
 
   return (
     <div 
-      className="flex space-x-6 max-h-[83vh] overflow-x-auto px-6"
+      className="flex space-x-6 max-h-[82vh] lg:max-h-[78vh] overflow-x-auto px-6"
       onDragOver={(e) => {
         if (draggedCategoryId) {
           e.preventDefault();
@@ -169,7 +169,7 @@ const DragDropBoard: FC<DragDropBoardProps> = ({
         if (draggedCategoryId) {
           const rect = e.currentTarget.getBoundingClientRect();
           const x = e.clientX - rect.left;
-          const categoryWidth = 320 + 24; // 320px width + 24px gap
+          const categoryWidth = 320 + 24;
           const targetIndex = Math.floor(x / categoryWidth);
           handleCategoryDrop(e, Math.min(targetIndex, categories.length - 1));
         }

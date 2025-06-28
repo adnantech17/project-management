@@ -27,3 +27,31 @@ export const formatDateTime = (dateString: string) => {
     minute: "2-digit",
   });
 };
+
+export const isTicketOverdue = (expiryDate: string | null | undefined): boolean => {
+  if (!expiryDate) {
+    return false;
+  }
+
+  return new Date(expiryDate) < new Date();
+};
+
+export const isTicketExpiringSoon = (expiryDate: string | null | undefined): boolean => {
+  if (!expiryDate) {
+    return false;
+  }
+
+  const THREE_DAYS_IN_MS = 3 * 24 * 60 * 60 * 1000;
+  const expiryTime = new Date(expiryDate).getTime();
+  const now = Date.now();
+
+  return expiryTime > now && expiryTime <= now + THREE_DAYS_IN_MS;
+};
+
+export const isFinalCategory = (categoryName: string): boolean => {
+  const finalCategoryNames = ['done', 'completed', 'finished', 'resolved', 'closed'];
+
+  return finalCategoryNames.some(name => 
+    categoryName.toLowerCase().includes(name)
+  );
+};

@@ -47,22 +47,14 @@ const CategoryColumn: FC<CategoryColumnProps> = ({
     const rect = e.currentTarget.getBoundingClientRect();
     const y = e.clientY;
     const ticketMiddle = rect.top + rect.height / 2;
+
+    console.log(y, ticketMiddle, y < ticketMiddle, index)
     
     if (y < ticketMiddle) {
       setDragOverIndex(index);
     } else {
       setDragOverIndex(index + 1);
     }
-  };
-
-  const handleTicketDrop = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const ticketId = e.dataTransfer.getData("text/plain");
-    if (ticketId && dragOverIndex !== -1) {
-      onDropTicket(ticketId, dragOverIndex);
-    }
-    setDragOverIndex(-1);
   };
 
   const handleColumnDragOver = (e: React.DragEvent) => {
@@ -82,11 +74,28 @@ const CategoryColumn: FC<CategoryColumnProps> = ({
   const handleColumnDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const ticketId = e.dataTransfer.getData("text/plain");
+    
     if (ticketId && dragOverIndex !== -1) {
-      onDropTicket(ticketId, dragOverIndex);
+        const draggedTicketIndex = tickets.findIndex(t => t.id === ticketId);
+        const isFromSameColumn = draggedTicketIndex !== -1;
+        
+        let adjustedDragOverIndex = dragOverIndex;
+        
+        if (isFromSameColumn && draggedTicketIndex < dragOverIndex) {
+            adjustedDragOverIndex = dragOverIndex - 1;
+        }
+        
+        if (!tickets.length) {
+            onDropTicket(ticketId, 0);
+        } else if (tickets.length === adjustedDragOverIndex) {
+            onDropTicket(ticketId, tickets[adjustedDragOverIndex - 1].position + 1);
+        } else {
+            onDropTicket(ticketId, tickets[adjustedDragOverIndex].position);
+        }
     }
+    
     setDragOverIndex(-1);
-  };
+};
 
   const getTicketStyle = (ticket: Ticket, index: number): React.CSSProperties => {
     if (draggedTicketId === ticket.id) return {};
@@ -159,10 +168,12 @@ const CategoryColumn: FC<CategoryColumnProps> = ({
       onDragOver={handleColumnDragOver}
       onDragLeave={handleColumnDragLeave}
       onDrop={handleColumnDrop}
-      draggable
-      onDragStart={handleCategoryDragStart}
     >
-      <div className="flex items-center justify-between mb-4">
+      <div 
+        className="flex items-center justify-between mb-4 cursor-move"
+        draggable
+        onDragStart={handleCategoryDragStart}
+      >
         <div className="flex items-center space-x-2">
           <div
             className="w-3 h-3 rounded-full"
@@ -175,7 +186,7 @@ const CategoryColumn: FC<CategoryColumnProps> = ({
         </div>
         <div className="relative" ref={dropdownRef}>
           <button 
-            className="text-gray-400 hover:text-gray-600 p-1 rounded transition-colors"
+            className="text-gray-400 hover:text-gray-600 p-1 rounded transition-colors cursor-pointer"
             onClick={handleDropdownClick}
           >
             <MoreHorizontal size={16} />
@@ -212,7 +223,6 @@ const CategoryColumn: FC<CategoryColumnProps> = ({
             <div
               style={getTicketStyle(ticket, index)}
               onDragOver={(e) => handleTicketDragOver(e, index)}
-              onDrop={(e) => handleTicketDrop(e, index)}
             >
               <TicketCard
                 ticket={ticket}

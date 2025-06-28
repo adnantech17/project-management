@@ -8,6 +8,7 @@ import { Table } from "@/components/table";
 import { Ticket } from "@/types/models";
 import { getTicketsPaginated } from "@/service/tickets";
 import { useRouter } from "next/navigation";
+import { formatDate } from "@/utils/date";
 
 const AllTicketsPage: FC = () => {
   const router = useRouter();
@@ -63,7 +64,7 @@ const AllTicketsPage: FC = () => {
               isOverdue ? "text-red-600" : isExpiringSoon ? "text-orange-600" : "text-gray-600"
             }`}>
               <Calendar size={14} />
-              <span>{date.toLocaleDateString()}</span>
+              <span>{formatDate(expiryDate)}</span>
             </div>
           );
         },
@@ -73,7 +74,7 @@ const AllTicketsPage: FC = () => {
         header: "Created",
         cell: ({ row }) => (
           <span className="text-gray-600">
-            {new Date(row.original.created_at).toLocaleDateString()}
+            {formatDate(row.original.created_at)}
           </span>
         ),
       },

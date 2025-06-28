@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, FC } from "react";
 import { getMe } from "@/service/auth";
 import { User } from "@/types/models";
-import { clearAllDrafts } from "@/utils/draft";
 import { logout as logoutService } from "@/service/auth";
 
 interface AuthContextType {
@@ -24,28 +23,6 @@ interface AuthProviderProps {
 export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const fetchUser = async () => {
-    try {
-      setLoading(true);
-      const userData = localStorage.getItem("user");
-      
-      if (!userData) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      const parsedUser = JSON.parse(userData);
-      setUser(parsedUser);
-    } catch (error) {
-      console.error("Error loading user from localStorage:", error);
-      localStorage.removeItem("user");
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const login = async () => {
     try {
@@ -71,7 +48,6 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     
     try {
       await logoutService();
-      clearAllDrafts();
     } catch (error) {
       console.error("Failed to clear drafts on logout:", error);
     }

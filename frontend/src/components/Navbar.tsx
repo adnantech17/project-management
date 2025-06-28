@@ -6,6 +6,7 @@ import { Menu, Settings, LogOut, ChevronDown } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import ProfileAvatar from "./ProfileAvatar";
 import Button from "./Button";
+import { useDraft } from "@/context/DraftContext";
 
 interface NavbarProps {
   onToggleSidebar: () => void;
@@ -17,8 +18,10 @@ const Navbar: FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen }) => {
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { clearAllDrafts } = useDraft();
 
   const handleLogout = () => {
+    clearAllDrafts();
     logout();
     router.push("/login");
     setIsDropdownOpen(false);
